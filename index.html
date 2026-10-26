@@ -3,87 +3,196 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b3d91">
 <title>Pasaport Fotoğrafı</title>
 <style>
-  :root { --ok:#1f8a4c; --warn:#b7791f; --fail:#c53030; --fix:#2b6cb0; --line:#e2e2e2; --muted:#666; }
+  :root {
+    --bg: #f4f6fa; --card: #ffffff; --ink: #14181f; --muted: #5d6675; --line: #e3e7ee;
+    --brand: #0b3d91; --brand-ink: #ffffff; --accent: #b31942;
+    --ok: #1f8a4c; --ok-bg: #e7f5ed; --warn: #a86500; --warn-bg: #fdf3e2;
+    --fail: #c53030; --fail-bg: #fdecec; --fix: #2459b3; --fix-bg: #e8effb;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 4px 16px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f131a; --card: #171c25; --ink: #e8ebf0; --muted: #9aa3b2; --line: #2a313d;
+      --brand: #4d7fd6; --brand-ink: #0b1220; --accent: #e0577a;
+      --ok: #4cc283; --ok-bg: #15281e; --warn: #e3a84a; --warn-bg: #2b2213;
+      --fail: #f07171; --fail-bg: #2e1717; --fix: #78a6f0; --fix-bg: #172238;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, system-ui, "Segoe UI", sans-serif; background:#fafafa; color:#1a1a1a; }
-  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.6rem; margin: 0 0 8px; }
-  h2 { font-size: 1.1rem; margin: 28px 0 10px; }
-  .lead { color: var(--muted); max-width: 760px; line-height: 1.5; }
-  .pickers { display:flex; gap:10px; flex-wrap:wrap; margin: 18px 0; }
-  .pick { display:inline-block; padding: 10px 16px; border-radius: 8px; background:#1a1a1a; color:#fff; cursor:pointer; font-weight:600; }
-  .pick.alt { background:#fff; color:#1a1a1a; border:1px solid #1a1a1a; }
-  .pick input { display:none; }
-  #status { min-height: 1.4em; color: var(--muted); }
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+  a { color: var(--brand); }
+
+  header.top { background: var(--brand); color: var(--brand-ink); }
+  header.top .in { max-width: 1040px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  header.top .mark { width: 34px; height: 34px; flex: none; }
+  header.top .name { font-weight: 700; font-size: 1.05rem; flex: 1; letter-spacing: .01em; }
+  .lang { display: inline-flex; border: 1px solid currentColor; border-radius: 999px; overflow: hidden; }
+  .lang button { all: unset; cursor: pointer; padding: 4px 12px; font-size: .85rem; font-weight: 600; }
+  .lang button[aria-pressed="true"] { background: var(--brand-ink); color: var(--brand); }
+
+  main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 64px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px; }
+  .card + .card, .grid + .card, .card + .grid { margin-top: 16px; }
+  h1 { font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; margin: 0 0 8px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .lead { color: var(--muted); margin: 0 0 16px; max-width: 720px; }
+
+  .pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 520px; }
+  @media (max-width: 420px) { .pickers { grid-template-columns: 1fr; } }
+  .pick { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 16px; border-radius: 12px; cursor: pointer; font-weight: 650; font-size: 1rem; background: var(--brand); color: var(--brand-ink); }
+  .pick.alt { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+  .pick svg { width: 20px; height: 20px; }
+  .pick input { display: none; }
+  .privacy { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
+  .privacy svg { width: 16px; height: 16px; flex: none; color: var(--ok); }
+
+  .steps { display: flex; gap: 6px; margin: 18px 0 0; padding: 0; list-style: none; counter-reset: s; flex-wrap: wrap; }
+  .steps li { counter-increment: s; display: flex; align-items: center; gap: 8px; font-size: .88rem; color: var(--muted); padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--bg); }
+  .steps li::before { content: counter(s); display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--line); color: var(--muted); font-weight: 700; font-size: .78rem; }
+  .steps li.on { color: var(--ink); font-weight: 600; }
+  .steps li.on::before { background: var(--brand); color: var(--brand-ink); }
+  .steps li.done::before { background: var(--ok); color: #fff; content: "✓"; }
+
+  #status { margin-top: 12px; color: var(--muted); font-size: .9rem; min-height: 1.4em; display: flex; align-items: center; gap: 8px; }
+  #status.busy::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--brand); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .grid { display: grid; grid-template-columns: 5fr 6fr; gap: 16px; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-  canvas.preview { width:100%; height:auto; border:1px solid var(--line); background:#fff; border-radius: 6px; }
-  .verdict { padding: 12px 14px; border-radius: 8px; font-weight: 600; margin-bottom: 12px; }
-  .verdict.ok { background:#e6f4ec; color: var(--ok); }
-  .verdict.fail { background:#fdeaea; color: var(--fail); }
-  ul.checks { list-style:none; padding:0; margin:0; }
-  ul.checks li { display:grid; grid-template-columns: 26px 1fr; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--line); }
-  .ic { font-weight: 700; text-align:center; }
-  .ok .ic { color: var(--ok); } .warn .ic { color: var(--warn); } .fail .ic { color: var(--fail); } .fix .ic { color: var(--fix); }
+  canvas.preview { width: 100%; height: auto; display: block; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; font-size: .85rem; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+
+  .verdict { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; font-weight: 600; margin-bottom: 8px; }
+  .verdict.ok { background: var(--ok-bg); color: var(--ok); }
+  .verdict.fail { background: var(--fail-bg); color: var(--fail); }
+  ul.checks { list-style: none; padding: 0; margin: 0; }
+  ul.checks li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  ul.checks li:last-child { border-bottom: 0; }
+  .ic { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: .8rem; font-weight: 800; }
+  .ok .ic { background: var(--ok-bg); color: var(--ok); }
+  .warn .ic { background: var(--warn-bg); color: var(--warn); }
+  .fail .ic { background: var(--fail-bg); color: var(--fail); }
+  .fix .ic { background: var(--fix-bg); color: var(--fix); }
   .t { font-weight: 600; }
-  .d { color: var(--muted); font-size: 0.92rem; line-height: 1.4; margin-top: 2px; }
-  .outputs { display:grid; grid-template-columns: 300px 1fr; gap: 24px; align-items:start; }
-  @media (max-width: 760px) { .outputs { grid-template-columns: 1fr; } }
-  .btn { display:inline-block; margin: 10px 8px 0 0; padding: 9px 14px; border-radius: 8px; background:#2b6cb0; color:#fff; text-decoration:none; font-weight:600; }
-  .opt { margin-top: 12px; padding: 10px 12px; background:#eef4fb; border-radius: 8px; font-size: 0.92rem; }
-  .note { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
-  .hidden { display:none; }
+  .d { color: var(--muted); font-size: .9rem; margin-top: 1px; }
+
+  .opt { margin-top: 12px; padding: 12px 14px; background: var(--fix-bg); border-radius: 12px; font-size: .92rem; }
+  .opt label { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
+  .opt input { width: 18px; height: 18px; accent-color: var(--brand); }
+  .opt .note { margin: 6px 0 0 28px; }
+
+  .outputs { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .outputs { grid-template-columns: 1fr; } .outputs > div:first-child { max-width: 300px; } }
+  .btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 11px 16px; border-radius: 10px; background: var(--brand); color: var(--brand-ink); text-decoration: none; font-weight: 650; }
+  .btn svg { width: 18px; height: 18px; }
+  .note { color: var(--muted); font-size: .9rem; margin: 10px 0 0; }
+
+  .tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .tips li { display: flex; gap: 10px; padding: 12px; border-radius: 12px; background: var(--bg); font-size: .92rem; }
+  .tips li b { color: var(--brand); font-size: 1.05rem; line-height: 1.3; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details p { color: var(--muted); font-size: .9rem; margin: 10px 0 0; }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 28px; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<main>
-  <h1>ABD pasaport fotoğrafı</h1>
-  <p class="lead">Fotoğrafı yükleyin ya da çekin. Önce ABD pasaport şartlarına uygun olup olmadığına bakılır. Düzeltilemeyecek bir sorun yoksa 2×2 inçlik (600×600 piksel) dijital fotoğraf ve 4×6 inçlik baskı sayfası hazırlanır. Fotoğraf hiçbir sunucuya gönderilmez, her şey bu tarayıcıda işlenir.</p>
-  <div class="pickers">
-    <label class="pick">Kamerayla çek<input id="cam" type="file" accept="image/*" capture="user"></label>
-    <label class="pick alt">Dosyadan seç<input id="file" type="file" accept="image/*"></label>
+<header class="top">
+  <div class="in">
+    <svg class="mark" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="31" height="31" rx="7" stroke="currentColor" stroke-width="2"/>
+      <circle cx="17" cy="14" r="5.5" fill="currentColor"/>
+      <path d="M7.5 29c1.5-5.2 5.2-8 9.5-8s8 2.8 9.5 8" fill="currentColor"/>
+    </svg>
+    <div class="name" data-i18n="brand"></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="tr">TR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
   </div>
-  <div id="status">Modeller yükleniyor…</div>
+</header>
+
+<main>
+  <section class="card">
+    <h1 data-i18n="title"></h1>
+    <p class="lead" data-i18n="lead"></p>
+    <div class="pickers">
+      <label class="pick">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <span data-i18n="cam"></span><input id="cam" type="file" accept="image/*" capture="user">
+      </label>
+      <label class="pick alt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
+        <span data-i18n="file"></span><input id="file" type="file" accept="image/*">
+      </label>
+    </div>
+    <div class="privacy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <span data-i18n="privacy"></span>
+    </div>
+    <ol class="steps" id="steps">
+      <li data-i18n="step1"></li><li data-i18n="step2"></li><li data-i18n="step3"></li>
+    </ol>
+    <div id="status" class="busy"></div>
+  </section>
 
   <section id="result" class="hidden">
-    <div class="grid">
-      <div>
-        <h2>Yüklenen fotoğraf</h2>
+    <div class="grid" style="margin-top:16px">
+      <div class="card">
+        <h2 data-i18n="uploaded"></h2>
         <canvas id="srcView" class="preview"></canvas>
-        <p class="note">Mavi kare: kesilecek alan. Yeşil çizgiler: başın tepesi ve çene.</p>
+        <div class="legend">
+          <span style="--c:#2b6cb0" data-i18n="legendCrop"></span>
+          <span style="--c:#1f8a4c" data-i18n="legendLines"></span>
+        </div>
       </div>
-      <div>
-        <h2>Kontroller</h2>
+      <div class="card">
+        <h2 data-i18n="checksH"></h2>
         <div id="verdict" class="verdict"></div>
         <ul id="checks" class="checks"></ul>
         <div id="bgOpt" class="opt hidden">
-          <label><input type="checkbox" id="whiten"> Arka planı beyaza çevir</label>
-          <div class="note">Kişinin arkasındaki alanı beyaza çevirir; yüz ve saç değişmez. Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor; en güvenlisi beyaz ya da kirli beyaz bir duvarın önünde çekmek. Saç kenarlarını önizlemede kontrol edin.</div>
+          <label><input type="checkbox" id="whiten"> <span data-i18n="whiten"></span></label>
+          <div class="note" data-i18n="whitenNote"></div>
         </div>
       </div>
     </div>
 
-    <section id="out" class="hidden">
-      <h2>Hazır fotoğraflar</h2>
+    <section id="out" class="card hidden">
+      <h2 data-i18n="outputsH"></h2>
       <div class="outputs">
         <div>
           <canvas id="digital" class="preview"></canvas>
-          <a id="dlDigital" class="btn" download="pasaport_2x2_600px.jpg">Dijital (600×600)</a>
+          <a id="dlDigital" class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg><span data-i18n="dlDigital"></span></a>
+          <p class="note" data-i18n="digitalNote"></p>
         </div>
         <div>
           <canvas id="sheet" class="preview"></canvas>
-          <a id="dlSheet" class="btn" download="pasaport_baski_4x6.jpg">Baskı sayfası (4×6 inç)</a>
-          <p class="note">Baskı için: dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> olarak yükleyin, kırpma ya da "doldur" seçeneğini kapatın. Kenarlardaki ince gri çizgilerden keserek iki adet 2×2 inç fotoğraf çıkar. Çıktıyı bir cetvelle ölçün: kare tam 2 inç (5,1 cm) olmalı.</p>
-          <p class="note">Dijital dosya: 600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için.</p>
+          <a id="dlSheet" class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg><span data-i18n="dlSheet"></span></a>
+          <p class="note" data-i18n-html="printNote"></p>
         </div>
       </div>
     </section>
   </section>
 
-  <h2>Neye bakılıyor?</h2>
-  <p class="note">Tek yüz; başın kameraya düz bakması; gözlerin açık olması; ağzın kapalı, ifadenin doğal olması; gözlük olmaması; netlik; yüzde yandan gelen gölge olmaması; arka planın beyaz ya da kirli beyaz ve düz olması; çözünürlük. Sonra fotoğraf, çeneden saçın tepesine kadar olan yükseklik fotoğrafın %50–69'u ve gözler alttan 1⅛–1⅜ inç yükseklikte olacak biçimde kırpılır. Eşikler henüz gerçek bir fotoğraf setiyle ayarlanmadı; özellikle gözlük ve netlik kontrolleri tahminidir. Ölçüleri <a href="https://travel.state.gov/content/travel/en/passports/how-apply/photos.html" target="_blank" rel="noopener">resmî sayfadan</a> doğrulayın.</p>
+  <section class="card">
+    <h2 data-i18n="tipsH"></h2>
+    <ul class="tips" id="tips"></ul>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary data-i18n="aboutH"></summary>
+      <p data-i18n-html="aboutBody"></p>
+    </details>
+  </section>
+
+  <footer data-i18n="footer"></footer>
 </main>
 
 <script type="module">
@@ -101,8 +210,206 @@ const HEAD_TARGET = 0.60, EYE_TARGET_FROM_TOP = 0.38;
 const DIGITAL_MAX_BYTES = 240 * 1024;
 const CLS = { BG: 0, HAIR: 1, BODY: 2, FACE: 3, CLOTHES: 4, OTHER: 5 };  // selfie_multiclass labels
 
+// ---------------------------------------------------------------- text
+
+const I18N = {
+  tr: {
+    ui: {
+      brand: "Pasaport Fotoğrafı",
+      title: "ABD pasaport fotoğrafı, dakikalar içinde",
+      lead: "Fotoğrafı çekin ya da yükleyin. Önce ABD pasaport şartlarına uygun olup olmadığına bakılır; düzeltilemeyecek bir sorun yoksa 2×2 inçlik dijital fotoğraf ve 4×6 inçlik baskı sayfası hazırlanır.",
+      cam: "Kamerayla çek", file: "Dosyadan seç",
+      privacy: "Fotoğraf hiçbir sunucuya gönderilmez; her şey bu cihazda işlenir.",
+      step1: "Çek ya da yükle", step2: "Kontrol", step3: "İndir ve bastır",
+      loading: "Modeller yükleniyor…", ready: "Hazır. Bir fotoğraf seçin.", processing: "İşleniyor…", done: "",
+      loadFail: "Modeller yüklenemedi: ", error: "Hata: ",
+      uploaded: "Yüklenen fotoğraf", legendCrop: "Kesilecek alan", legendLines: "Başın tepesi ve çene",
+      checksH: "Kontroller",
+      verdictFail: "Bu fotoğraf düzeltilemez — yeniden çekin. Kırmızı maddelere bakın.",
+      verdictOk: "Uygun. Fotoğrafınız hazır.",
+      verdictWarn: n => `Uygun, ${n} uyarıyla. Uyarıları gözden geçirin.`,
+      whiten: "Arka planı beyaza çevir",
+      whitenNote: "Arkanızdaki alanı beyaza çevirir; yüz ve saç değişmez. Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor; en güvenlisi beyaz ya da kirli beyaz bir duvarın önünde çekmek. Saç kenarlarını önizlemede kontrol edin.",
+      outputsH: "Hazır fotoğraflar",
+      dlDigital: "Dijital (600×600)", dlSheet: "Baskı sayfası (4×6 inç)",
+      digitalNote: "600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için.",
+      printNote: "Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. İnce gri çizgilerden keserek iki adet 2×2 inç fotoğraf çıkar. Çıktıyı cetvelle ölçün: her kare tam 2 inç (5,1 cm) olmalı.",
+      tipsH: "İyi bir fotoğraf için",
+      tips: ["Beyaz ya da kirli beyaz bir duvarın önünde durun.", "Işık önden ve eşit gelsin; pencereye dönün.", "Gözlüğü çıkarın, kameraya düz bakın, ağzınız kapalı olsun.", "Fotoğrafı başkası çeksin: yaklaşık 1 metreden, göz hizasından.", "Baş ve omuzlar kadraja rahatça sığsın."],
+      aboutH: "Neye bakılıyor?",
+      aboutBody: "Tek yüz; başın kameraya düz bakması; gözlerin açık, ağzın kapalı ve ifadenin doğal olması; gözlük olmaması; netlik; yüzde yandan gelen gölge olmaması; arka planın beyaz ya da kirli beyaz ve düz olması; çözünürlük. Ardından fotoğraf, çeneden saçın tepesine kadar olan yükseklik 1–1⅜ inç ve gözler alttan 1⅛–1⅜ inç olacak biçimde kırpılır. Eşikler henüz büyük bir fotoğraf setiyle ayarlanmadı; özellikle gözlük ve netlik kontrolleri tahminidir. Ölçüleri <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">resmî sayfadan</a> doğrulayın.",
+      footer: "Resmî bir hizmet değildir. Başvurunun kabulü ABD Dışişleri Bakanlığı'na aittir.",
+      fileDigital: "pasaport_2x2_600px.jpg", fileSheet: "pasaport_baski_4x6.jpg",
+    },
+    bg: { dark: "yeterince açık değil", busy: "düz değil (desen, gölge ya da eşya var)", colored: "renkli" },
+    c: {
+      oneFace: ["Tek yüz", "Fotoğrafta bir kişi var."],
+      noFace: ["Yüz bulunamadı", "Fotoğrafta net bir yüz bulunamadı."],
+      manyFaces: ["Birden fazla yüz var", "Fotoğrafta yalnız bir kişi olmalı."],
+      yawFail: p => ["Baş yana dönük", `Baş yaklaşık ${p.a}° yana dönük. Kameraya tam karşıdan bakın.`],
+      yawWarn: p => ["Baş biraz yana dönük", `Yaklaşık ${p.a}°. Kabul edilebilir ama tam karşıdan daha güvenli.`],
+      yawOk: p => ["Baş düz (sağ-sol)", `Sapma ${p.a}°.`],
+      pitchFail: p => ["Baş yukarı ya da aşağı eğik", `Yaklaşık ${p.a}°. Çene yere paralel, kamera göz hizasında olmalı.`],
+      pitchWarn: p => ["Baş biraz eğik", `Yaklaşık ${p.a}°. Kamerayı göz hizasına getirin.`],
+      pitchOk: p => ["Baş düz (yukarı-aşağı)", `Sapma ${p.a}°.`],
+      rollFail: p => ["Baş yana yatık", `Yaklaşık ${p.a}°. Başınızı dik tutun.`],
+      rollFix: p => ["Baş hafif yatık — düzeltildi", `Fotoğraf ${p.a}° döndürülerek gözler yatay hale getirildi.`],
+      rollOk: p => ["Baş dik", `Yatıklık ${p.a}°.`],
+      eyesClosed: ["Göz kapalı ya da kısık", "İki göz de tam açık olmalı."],
+      eyesSquint: ["Gözler biraz kısık", "Gözlerinizi doğal biçimde açık tutun."],
+      eyesOk: ["Gözler açık", ""],
+      gaze: ["Bakış kameraya değil gibi", "Doğrudan kameranın merceğine bakın."],
+      mouthOpen: ["Ağız açık", "Ağız kapalı, ifade doğal olmalı."],
+      mouthAjar: ["Ağız hafif açık", "Ağzınızı kapatın."],
+      bigSmile: ["Geniş gülümseme", "Doğal hafif gülümseme kabul edilir; geniş gülümseme reddedilebilir."],
+      exprOk: ["İfade doğal", ""],
+      topCut: ["Başın tepesi kesilmiş", "Başın tamamı ve üstünde biraz boşluk görünmeli. Biraz daha uzaktan çekin."],
+      topEst: ["Saç sınırı bulunamadı", "Başın tepesi tahminle konumlandırıldı; kırpmayı gözle kontrol edin."],
+      geoFail: ["Ölçüler tutturulamadı", "Baş boyu ve göz yüksekliği birlikte şartlara uymadı. Düz bakarak, başın tamamı görünecek şekilde yeniden çekin."],
+      frameTight: p => ["Kadraj çok dar", `Kesilecek alanın yüzde ${p.p} kadarı fotoğrafın dışında kalıyor. Biraz daha uzaktan, baş ortada olacak şekilde çekin.`],
+      frameEdge: ["Kenarda küçük boşluk", "Kesilen alanın ince bir kenarı fotoğrafın dışında kaldı ve beyazla dolduruldu."],
+      resLow: p => ["Çözünürlük düşük", `Baş ${p.px} piksel yüksekliğinde; en az 300 civarı gerekir. Daha yakından ya da daha iyi bir kamerayla çekin.`],
+      resEdge: p => ["Çözünürlük sınırda", `Baş ${p.px} piksel; çıktı için biraz büyütüldü.`],
+      resOk: p => ["Çözünürlük yeterli", `Baş ${p.px} piksel yüksekliğinde.`],
+      geoOk: p => ["Ölçüler ayarlandı", `Baş yüksekliği ${p.h} inç (izin verilen 1–1,375). Gözler alttan ${p.e} inç (izin verilen 1,125–1,375).`],
+      bgOk: ["Arka plan beyaz ve düz", ""],
+      bgBad: p => ["Arka plan uygun değil", `Arka plan ${p.why}. Beyaz bir duvarın önünde yeniden çekin ya da aşağıdan beyaza çevirin.`],
+      shadowStrong: ["Yüzde güçlü gölge", "Yüzün bir yarısı belirgin biçimde karanlık. Işık önden ve eşit gelmeli."],
+      shadowSoft: ["Yüzde hafif gölge", "Işığı daha eşit yapın (pencereye dönün)."],
+      lightOk: ["Işık eşit", ""],
+      tooDark: ["Fotoğraf çok karanlık", ""], tooBright: ["Fotoğraf çok parlak", ""],
+      bitDark: ["Fotoğraf biraz karanlık", ""], bitBright: ["Fotoğraf biraz parlak", ""],
+      blurFail: ["Fotoğraf bulanık", "Kamerayı sabit tutun, odak yüzde olsun."],
+      blurWarn: ["Netlik sınırda", "Mümkünse daha net bir kare çekin."],
+      sharpOk: ["Fotoğraf net", ""],
+      glasses: ["Gözlük var gibi", "ABD pasaport fotoğrafında gözlük yasak (tıbbi rapor hariç). Gözlük takıyorsanız çıkarıp yeniden çekin."],
+      hat: ["Şapka ya da başlık olabilir (tahmini)", "Başlık yalnız dinî ya da tıbbi gerekçeyle ve imzalı beyanla kabul edilir."],
+    },
+  },
+  en: {
+    ui: {
+      brand: "Passport Photo",
+      title: "A US passport photo in minutes",
+      lead: "Take or upload a photo. It is first checked against US passport rules; if nothing unfixable is found, you get a 2×2 inch digital photo and a 4×6 inch print sheet.",
+      cam: "Take photo", file: "Choose file",
+      privacy: "Your photo never leaves this device; everything runs in your browser.",
+      step1: "Take or upload", step2: "Check", step3: "Download & print",
+      loading: "Loading models…", ready: "Ready. Choose a photo.", processing: "Processing…", done: "",
+      loadFail: "Could not load models: ", error: "Error: ",
+      uploaded: "Your photo", legendCrop: "Crop area", legendLines: "Top of head and chin",
+      checksH: "Checks",
+      verdictFail: "This photo can't be fixed — please retake it. See the red items.",
+      verdictOk: "Looks good. Your photo is ready.",
+      verdictWarn: n => `Acceptable, with ${n} warning${n > 1 ? "s" : ""}. Please review ${n > 1 ? "them" : "it"}.`,
+      whiten: "Make background white",
+      whitenNote: "Turns the area behind you white; face and hair stay unchanged. Official rules ask that photos not be digitally altered, so a white or off-white wall is the safest choice. Check the hair edges in the preview.",
+      outputsH: "Your photos",
+      dlDigital: "Digital (600×600)", dlSheet: "Print sheet (4×6 in)",
+      digitalNote: "600×600 px JPEG under 240 KB — for online renewal.",
+      printNote: "Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Cut along the thin grey lines to get two 2×2 in photos. Measure the print: each square must be exactly 2 in (5.1 cm).",
+      tipsH: "For a good photo",
+      tips: ["Stand in front of a white or off-white wall.", "Light should be even and from the front; face a window.", "Remove glasses, look straight at the camera, keep your mouth closed.", "Have someone else take it, about 1 m (3 ft) away, at eye level.", "Leave room for your head and shoulders in the frame."],
+      aboutH: "What is checked?",
+      aboutBody: "One face; head facing the camera; eyes open, mouth closed, neutral expression; no glasses; sharpness; no side shadows on the face; plain white or off-white background; resolution. The photo is then cropped so that chin-to-top-of-hair is 1–1⅜ in and the eyes are 1⅛–1⅜ in above the bottom. Thresholds have not yet been tuned on a large photo set; the glasses and sharpness checks in particular are estimates. Confirm the measurements on the <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">official page</a>.",
+      footer: "Not an official service. Acceptance is decided by the US Department of State.",
+      fileDigital: "passport_2x2_600px.jpg", fileSheet: "passport_print_4x6.jpg",
+    },
+    bg: { dark: "not light enough", busy: "not plain (pattern, shadow or objects)", colored: "colored" },
+    c: {
+      oneFace: ["One face", "Exactly one person in the photo."],
+      noFace: ["No face found", "No clear face was found in the photo."],
+      manyFaces: ["More than one face", "Only one person may be in the photo."],
+      yawFail: p => ["Head turned sideways", `Turned about ${p.a}°. Face the camera directly.`],
+      yawWarn: p => ["Head slightly turned", `About ${p.a}°. Acceptable, but facing straight is safer.`],
+      yawOk: p => ["Head straight (left–right)", `Off by ${p.a}°.`],
+      pitchFail: p => ["Head tilted up or down", `About ${p.a}°. Keep your chin level and the camera at eye height.`],
+      pitchWarn: p => ["Head slightly tilted", `About ${p.a}°. Bring the camera to eye height.`],
+      pitchOk: p => ["Head straight (up–down)", `Off by ${p.a}°.`],
+      rollFail: p => ["Head tilted to the side", `About ${p.a}°. Hold your head upright.`],
+      rollFix: p => ["Slight head tilt — corrected", `The photo was rotated ${p.a}° to level the eyes.`],
+      rollOk: p => ["Head upright", `Tilt ${p.a}°.`],
+      eyesClosed: ["Eyes closed or squinting", "Both eyes must be fully open."],
+      eyesSquint: ["Eyes slightly narrowed", "Keep your eyes naturally open."],
+      eyesOk: ["Eyes open", ""],
+      gaze: ["Not looking at the camera", "Look straight into the lens."],
+      mouthOpen: ["Mouth open", "Keep your mouth closed with a neutral expression."],
+      mouthAjar: ["Mouth slightly open", "Close your mouth."],
+      bigSmile: ["Big smile", "A natural slight smile is fine; a wide smile may be rejected."],
+      exprOk: ["Natural expression", ""],
+      topCut: ["Top of head cut off", "The whole head and a little space above it must be visible. Step back a little."],
+      topEst: ["Hairline not found", "The top of the head was estimated; check the crop visually."],
+      geoFail: ["Size rules could not be met", "Head size and eye height could not both be satisfied. Retake facing straight with your whole head visible."],
+      frameTight: p => ["Framing too tight", `About ${p.p}% of the crop falls outside the photo. Step back and keep your head centered.`],
+      frameEdge: ["Small gap at the edge", "A thin edge of the crop fell outside the photo and was filled with white."],
+      resLow: p => ["Resolution too low", `Your head is ${p.px} pixels tall; about 300 is needed. Move closer or use a better camera.`],
+      resEdge: p => ["Resolution borderline", `Your head is ${p.px} pixels; it was enlarged slightly.`],
+      resOk: p => ["Resolution OK", `Your head is ${p.px} pixels tall.`],
+      geoOk: p => ["Size adjusted", `Head height ${p.h} in (allowed 1–1.375). Eyes ${p.e} in above the bottom (allowed 1.125–1.375).`],
+      bgOk: ["Plain white background", ""],
+      bgBad: p => ["Background not suitable", `The background is ${p.why}. Retake in front of a white wall, or turn it white below.`],
+      shadowStrong: ["Strong shadow on face", "One half of the face is clearly darker. Light should come evenly from the front."],
+      shadowSoft: ["Slight shadow on face", "Make the light more even (face a window)."],
+      lightOk: ["Even lighting", ""],
+      tooDark: ["Photo too dark", ""], tooBright: ["Photo too bright", ""],
+      bitDark: ["Photo a bit dark", ""], bitBright: ["Photo a bit bright", ""],
+      blurFail: ["Photo is blurry", "Hold the camera steady and focus on the face."],
+      blurWarn: ["Sharpness borderline", "Take a sharper shot if you can."],
+      sharpOk: ["Photo is sharp", ""],
+      glasses: ["Glasses detected", "Glasses are not allowed in US passport photos (except with a medical statement). If you wear them, take them off and retake."],
+      hat: ["Possible hat or head covering (estimate)", "Head coverings are accepted only for religious or medical reasons, with a signed statement."],
+    },
+  },
+};
+
+let lang = (() => {
+  try { const s = localStorage.getItem("lang"); if (s === "tr" || s === "en") return s; } catch {}
+  return (navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en";
+})();
+const L = () => I18N[lang];
+const num = (v, d = 0) => v.toLocaleString(lang === "tr" ? "tr-TR" : "en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const checkText = c => {
+  const e = L().c[c.key];
+  if (typeof e !== "function") return e;
+  const p = { ...c.p };
+  if (p.why) p.why = p.why.map(k => L().bg[k]).join(", ");
+  for (const k of ["a", "h", "e"]) if (typeof p[k] === "number") p[k] = num(p[k], k === "a" ? (p.d ?? 0) : 2);
+  for (const k of ["p", "px"]) if (typeof p[k] === "number") p[k] = num(p[k]);
+  return e(p);
+};
+
 const $ = id => document.getElementById(id);
-const status = msg => { $("status").textContent = msg; };
+let statusKey = "loading", statusExtra = "";
+const status = (key, extra = "") => {
+  statusKey = key; statusExtra = extra;
+  $("status").textContent = (L().ui[key] || "") + extra;
+  $("status").classList.toggle("busy", key === "loading" || key === "processing");
+};
+let step = 1;
+const setStep = n => {
+  step = n;
+  [...$("steps").children].forEach((li, i) => { li.className = i + 1 < n ? "done" : i + 1 === n ? "on" : ""; });
+};
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = L().ui.brand;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = L().ui[el.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = L().ui[el.dataset.i18nHtml]; });
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  $("tips").innerHTML = L().ui.tips.map((t, i) => `<li><b>${i + 1}</b><span>${t}</span></li>`).join("");
+  $("dlDigital").download = L().ui.fileDigital;
+  $("dlSheet").download = L().ui.fileSheet;
+  status(statusKey, statusExtra);
+  if (current) renderChecks(current.res);
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => {
+  lang = b.dataset.lang;
+  try { localStorage.setItem("lang", lang); } catch {}
+  applyLang();
+}));
+
+// ---------------------------------------------------------------- models
+
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 const deg = r => r * 180 / Math.PI;
@@ -120,14 +427,14 @@ const ready = (async () => {
     baseOptions: { modelAssetPath: SEG_MODEL, delegate: "CPU" },
     runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: true,
   });
-  status("Hazır. Bir fotoğraf seçin.");
-})().catch(e => { status("Modeller yüklenemedi: " + e.message); throw e; });
+  status("ready");
+})().catch(e => { status("loadFail", e.message); throw e; });
 
 function loadImage(file) {
   return new Promise((res, rej) => {
     const img = new Image();
     img.onload = () => res(img);
-    img.onerror = () => rej(new Error("Görüntü açılamadı"));
+    img.onerror = () => rej(new Error("image"));
     img.src = URL.createObjectURL(file);
   });
 }
@@ -144,16 +451,15 @@ function analyze(img) {
   const ww = work.width, wh = work.height;
 
   const checks = [];
-  const add = (status, title, detail) => checks.push({ status, title, detail });
+  const add = (status, key, p = {}) => checks.push({ status, key, p });
 
   const fr = faceModel.detect(work);
   const nFaces = fr.faceLandmarks.length;
   if (nFaces !== 1) {
-    add("fail", nFaces === 0 ? "Yüz bulunamadı" : "Birden fazla yüz var",
-      nFaces === 0 ? "Fotoğrafta net bir yüz bulunamadı." : "Fotoğrafta yalnız bir kişi olmalı.");
+    add("fail", nFaces === 0 ? "noFace" : "manyFaces");
     return { checks, work };
   }
-  add("ok", "Tek yüz", "Fotoğrafta bir kişi var.");
+  add("ok", "oneFace");
 
   let mw, mh, cat, bgConf;
   segModel.segment(work, r => {
@@ -177,29 +483,25 @@ function analyze(img) {
   const roll = Math.atan2(eyeR.y - eyeL.y, eyeR.x - eyeL.x);
 
   const ay = Math.abs(yaw), ap = Math.abs(pitch);
-  if (ay > 10) add("fail", "Baş yana dönük", `Baş yaklaşık ${ay.toFixed(0)}° yana dönük. Kameraya tam karşıdan bakın.`);
-  else if (ay > 6) add("warn", "Baş biraz yana dönük", `Yaklaşık ${ay.toFixed(0)}°. Kabul edilebilir ama tam karşıdan daha güvenli.`);
-  else add("ok", "Baş düz (sağ-sol)", `Sapma ${ay.toFixed(0)}°.`);
-  if (ap > 15) add("fail", "Baş yukarı/aşağı eğik", `Yaklaşık ${ap.toFixed(0)}°. Çene yere paralel, kamera göz hizasında olmalı.`);
-  else if (ap > 9) add("warn", "Baş biraz eğik", `Yaklaşık ${ap.toFixed(0)}°. Kamerayı göz hizasına getirin.`);
-  else add("ok", "Baş düz (yukarı-aşağı)", `Sapma ${ap.toFixed(0)}°.`);
+  add(ay > 10 ? "fail" : ay > 6 ? "warn" : "ok", ay > 10 ? "yawFail" : ay > 6 ? "yawWarn" : "yawOk", { a: ay });
+  add(ap > 15 ? "fail" : ap > 9 ? "warn" : "ok", ap > 15 ? "pitchFail" : ap > 9 ? "pitchWarn" : "pitchOk", { a: ap });
   const ar = Math.abs(deg(roll));
-  if (ar > 10) add("fail", "Baş yana yatık", `Yaklaşık ${ar.toFixed(0)}°. Başı dik tutun.`);
-  else if (ar > 2) add("fix", "Baş hafif yatık — düzeltildi", `Fotoğraf ${ar.toFixed(1)}° döndürülerek gözler yatay hale getirildi.`);
-  else add("ok", "Baş dik", `Yatıklık ${ar.toFixed(1)}°.`);
+  if (ar > 10) add("fail", "rollFail", { a: ar });
+  else if (ar > 2) add("fix", "rollFix", { a: ar, d: 1 });
+  else add("ok", "rollOk", { a: ar, d: 1 });
 
   // --- eyes, gaze, mouth
   const blink = Math.max(bs.eyeBlinkLeft, bs.eyeBlinkRight);
-  if (blink > 0.5) add("fail", "Göz kapalı ya da kısık", "İki göz de tam açık olmalı.");
-  else if (blink > 0.35) add("warn", "Gözler biraz kısık", "Gözleri doğal biçimde açık tutun.");
-  else add("ok", "Gözler açık", "");
+  if (blink > 0.5) add("fail", "eyesClosed");
+  else if (blink > 0.35) add("warn", "eyesSquint");
+  else add("ok", "eyesOk");
   const gaze = Math.max(...["Left", "Right"].flatMap(s => ["In", "Out", "Up", "Down"].map(d => bs[`eyeLook${d}${s}`])));
-  if (gaze > 0.55) add("warn", "Bakış kameraya değil gibi", "Doğrudan kameranın merceğine bakın.");
-  if (bs.jawOpen > 0.35) add("fail", "Ağız açık", "Ağız kapalı, ifade doğal olmalı.");
-  else if (bs.jawOpen > 0.2) add("warn", "Ağız hafif açık", "Ağzı kapatın.");
+  if (gaze > 0.55) add("warn", "gaze");
+  if (bs.jawOpen > 0.35) add("fail", "mouthOpen");
+  else if (bs.jawOpen > 0.2) add("warn", "mouthAjar");
   const smile = Math.max(bs.mouthSmileLeft, bs.mouthSmileRight);
-  if (smile > 0.7) add("warn", "Geniş gülümseme", "Doğal hafif gülümseme kabul edilir; geniş gülümseme reddedilebilir.");
-  if (bs.jawOpen <= 0.2 && smile <= 0.7) add("ok", "İfade doğal", "");
+  if (smile > 0.7) add("warn", "bigSmile");
+  if (bs.jawOpen <= 0.2 && smile <= 0.7) add("ok", "exprOk");
 
   // --- top of head from the hair/face mask, chin from landmarks
   const chin = P(152), forehead = P(10);
@@ -218,8 +520,8 @@ function analyze(img) {
   const tTop = tops.length ? tops[Math.floor(tops.length * 0.1)] : Infinity;
   if (tTop < forehead.y) top = { x: fcX, y: tTop };
   else { top = { x: fcX, y: forehead.y - 0.25 * (chin.y - forehead.y) }; topMeasured = false; }
-  if (top.y <= H * 0.005) add("fail", "Başın tepesi kesilmiş", "Başın tamamı ve üstünde biraz boşluk görünmeli. Biraz daha uzaktan çekin.");
-  if (!topMeasured) add("warn", "Saç sınırı bulunamadı", "Başın tepesi tahminle konumlandırıldı; kırpmayı gözle kontrol edin.");
+  if (top.y <= H * 0.005) add("fail", "topCut");
+  if (!topMeasured) add("warn", "topEst");
 
   // --- geometry in a frame rotated so the eyes are level, origin at the eye midpoint
   const c = Math.cos(-roll), s = Math.sin(-roll);
@@ -256,23 +558,20 @@ function analyze(img) {
     }
   }
   if (!geo) {
-    add("fail", "Ölçüler tutturulamadı", "Baş ile göz konumu birlikte şartlara uymadı. Düz bakarak, başın tamamı görünecek şekilde yeniden çekin.");
+    add("fail", "geoFail");
     return { checks, work };
   }
   Object.assign(geo, { E, roll, W, H, mw, mh, bgConf, chin, top });
   geo.back = backFor(geo.sc, geo.T);   // also used for the preview square
   const outFrac = geo.of;
-  if (outFrac > 0.03) add("fail", "Kadraj çok dar", `Kesilecek alanın %${(outFrac * 100).toFixed(0)}'i fotoğrafın dışında kalıyor. Biraz daha uzaktan, baş ortada olacak şekilde çekin.`);
-  else if (outFrac > 0) add("warn", "Kenarda küçük boşluk", "Kesilen alanın küçük bir kenarı fotoğrafın dışında kaldı ve beyazla dolduruldu.");
+  if (outFrac > 0.03) add("fail", "frameTight", { p: outFrac * 100 });
+  else if (outFrac > 0) add("warn", "frameEdge");
 
-  const headPx = headH;
-  if (headPx < 240) add("fail", "Çözünürlük düşük", `Baş ${headPx.toFixed(0)} piksel yüksekliğinde; en az ~300 gerekir. Daha yakından ya da daha iyi kamerayla çekin.`);
-  else if (headPx < geo.ratio * S) add("warn", "Çözünürlük sınırda", `Baş ${headPx.toFixed(0)} piksel; çıktı için biraz büyütüldü.`);
-  else add("ok", "Çözünürlük yeterli", `Baş ${headPx.toFixed(0)} piksel yüksekliğinde.`);
+  if (headH < 240) add("fail", "resLow", { px: headH });
+  else if (headH < geo.ratio * S) add("warn", "resEdge", { px: headH });
+  else add("ok", "resOk", { px: headH });
 
-  const eyeFromBottomIn = (S - geo.eyeOut) / S * 2;
-  add("ok", "Ölçüler ayarlandı",
-    `Baş yüksekliği fotoğrafın %${(geo.ratio * 100).toFixed(0)}'i (${(geo.ratio * 2).toFixed(2)} inç; izin verilen 1–1,375). Gözler alttan ${eyeFromBottomIn.toFixed(2)} inç (izin verilen 1,125–1,375).`);
+  add("ok", "geoOk", { h: geo.ratio * 2, e: (S - geo.eyeOut) / S * 2 });
 
   // --- pixel statistics on the work canvas
   const data = wctx.getImageData(0, 0, ww, wh).data;
@@ -282,11 +581,11 @@ function analyze(img) {
   for (let y = 0; y < wh; y += 2) for (let x = 0; x < ww; x += 2) {
     const i = (y * ww + x) * 4;
     const R = data[i], G = data[i + 1], B = data[i + 2];
-    const cl = clsAt(x / ww, y / wh), L = lum(R, G, B);
+    const cl = clsAt(x / ww, y / wh), Lv = lum(R, G, B);
     if (cl === CLS.BG && y < chin.y * k && x >= xL && x <= xR) {
-      bgN++; bgL += L; bgL2 += L * L; bgSat += Math.max(R, G, B) - Math.min(R, G, B);
+      bgN++; bgL += Lv; bgL2 += Lv * Lv; bgSat += Math.max(R, G, B) - Math.min(R, G, B);
     } else if (cl === CLS.FACE) {
-      const side = x < fxMid ? 0 : 1; fL[side] += L; fN[side]++;
+      const side = x < fxMid ? 0 : 1; fL[side] += Lv; fN[side]++;
     }
   }
 
@@ -294,22 +593,21 @@ function analyze(img) {
   geo.bgFixable = false;
   if (bgN > 50) {
     const mean = bgL / bgN, sd = Math.sqrt(Math.max(0, bgL2 / bgN - mean * mean)), sat = bgSat / bgN;
-    if (mean >= 190 && sd <= 28 && sat <= 30) add("ok", "Arka plan beyaz ve düz", "");
+    if (mean >= 190 && sd <= 28 && sat <= 30) add("ok", "bgOk");
     else {
       geo.bgFixable = true;
-      const why = [mean < 190 ? "yeterince açık değil" : null, sd > 28 ? "düz değil (desen, gölge ya da eşya var)" : null, sat > 30 ? "renkli" : null].filter(Boolean).join(", ");
-      add("warn", "Arka plan uygun değil", `Arka plan ${why}. Beyaz duvar önünde yeniden çekin ya da aşağıdan beyaza çevirin.`);
+      add("warn", "bgBad", { why: [mean < 190 && "dark", sd > 28 && "busy", sat > 30 && "colored"].filter(Boolean) });
     }
   }
 
   // face lighting
   if (fN[0] > 30 && fN[1] > 30) {
     const a = fL[0] / fN[0], b = fL[1] / fN[1], ratio = Math.min(a, b) / Math.max(a, b), mean = (fL[0] + fL[1]) / (fN[0] + fN[1]);
-    if (ratio < 0.65) add("fail", "Yüzde güçlü gölge", "Yüzün bir yarısı belirgin biçimde karanlık. Işık önden ve eşit gelmeli.");
-    else if (ratio < 0.8) add("warn", "Yüzde hafif gölge", "Işığı daha eşit yapın (pencereye karşı durun).");
-    else add("ok", "Işık eşit", "");
-    if (mean < 60 || mean > 235) add("fail", mean < 60 ? "Fotoğraf çok karanlık" : "Fotoğraf çok parlak", "");
-    else if (mean < 85 || mean > 215) add("warn", mean < 85 ? "Fotoğraf biraz karanlık" : "Fotoğraf biraz parlak", "");
+    if (ratio < 0.65) add("fail", "shadowStrong");
+    else if (ratio < 0.8) add("warn", "shadowSoft");
+    else add("ok", "lightOk");
+    if (mean < 60 || mean > 235) add("fail", mean < 60 ? "tooDark" : "tooBright");
+    else if (mean < 85 || mean > 215) add("warn", mean < 85 ? "bitDark" : "bitBright");
   }
 
   // sharpness: variance of the Laplacian over the face, normalised to a fixed width
@@ -326,9 +624,9 @@ function analyze(img) {
     lapS += v; lapS2 += v * v; lapN++;
   }
   const sharp = lapS2 / lapN - (lapS / lapN) ** 2;
-  if (sharp < 15) add("fail", "Fotoğraf bulanık", "Kamerayı sabit tutun, odak yüzde olsun.");
-  else if (sharp < 40) add("warn", "Netlik sınırda", "Mümkünse daha net bir kare çekin.");
-  else add("ok", "Fotoğraf net", "");
+  if (sharp < 15) add("fail", "blurFail");
+  else if (sharp < 40) add("warn", "blurWarn");
+  else add("ok", "sharpOk");
 
   // glasses / headwear: "other/accessory" class around the eyes and above the forehead (heuristic)
   const frac = (x0, y0, x1, y1, cls) => {
@@ -340,11 +638,27 @@ function analyze(img) {
   };
   const eyeBoxH = 0.08 * (chin.y - forehead.y);
   const gl = frac(Math.min(P(33).x, P(263).x) - 0.05 * faceW, E.y - eyeBoxH, Math.max(P(33).x, P(263).x) + 0.05 * faceW, E.y + eyeBoxH, CLS.OTHER);
-  if (gl > 0.08) add("warn", "Gözlük olabilir (tahmini)", "ABD pasaport fotoğrafında gözlük yasak (tıbbi rapor hariç). Gözlük takıyorsanız çıkarıp yeniden çekin.");
+  // A frame bridge leaves a sharp horizontal edge on the otherwise smooth nose bridge.
+  // Strongest row of |vertical gradient| between the eyes, relative to cheek texture.
+  const lum2 = (x, y) => { const i = (clamp(Math.round(y), 0, wh - 1) * ww + clamp(Math.round(x), 0, ww - 1)) * 4; return lum(data[i], data[i + 1], data[i + 2]); };
+  const inL = P(133), inR = P(362), io = Math.hypot(inR.x - inL.x, inR.y - inL.y) * k, st = Math.max(1, io / 40);
+  const bx = (inL.x + inR.x) / 2 * k, by = (inL.y + inR.y) / 2 * k, ck = { x: P(50).x * k, y: P(50).y * k };
+  let cheekG = 0, cheekN = 0;
+  for (let y = ck.y - io / 4; y <= ck.y + io / 4; y += st) for (let x = ck.x - io / 4; x <= ck.x + io / 4; x += st) {
+    cheekG += Math.abs(lum2(x, y + st) - lum2(x, y - st)) + Math.abs(lum2(x + st, y) - lum2(x - st, y)); cheekN++;
+  }
+  const cheekRef = cheekG / cheekN / 2 + 1;
+  let bridge = 0;
+  for (let y = by - 0.45 * io; y <= by + 0.2 * io; y += st) {
+    let s = 0, n = 0;
+    for (let x = bx - 0.18 * io; x <= bx + 0.18 * io; x += st) { s += Math.abs(lum2(x, y + st) - lum2(x, y - st)); n++; }
+    bridge = Math.max(bridge, s / n / cheekRef);
+  }
+  if (gl > 0.08 || bridge > 3.5) add("warn", "glasses");
   const hat = frac(fcX - 0.4 * faceW, top.y, fcX + 0.4 * faceW, forehead.y, CLS.OTHER);
-  if (hat > 0.25) add("warn", "Şapka ya da başlık olabilir (tahmini)", "Başlık yalnız dinî/tıbbi gerekçeyle ve imzalı beyanla kabul edilir.");
+  if (hat > 0.25) add("warn", "hat");
 
-  return { checks, work, geo, k };
+  return { checks, work, geo, k, lm };
 }
 
 // ---------------------------------------------------------------- rendering
@@ -453,10 +767,23 @@ function drawSourceView(res) {
 }
 
 const ICON = { ok: "✓", warn: "!", fail: "✕", fix: "↻" };
+const failed = res => !res.geo || res.checks.some(c => c.status === "fail");
+
+function renderChecks(res) {
+  const order = { fail: 0, warn: 1, fix: 2, ok: 3 };
+  $("checks").innerHTML = res.checks.slice().sort((a, b) => order[a.status] - order[b.status]).map(c => {
+    const [t, d] = checkText(c);
+    return `<li class="${c.status}"><span class="ic">${ICON[c.status]}</span><div><div class="t">${t}</div>${d ? `<div class="d">${d}</div>` : ""}</div></li>`;
+  }).join("");
+  const warns = res.checks.filter(c => c.status === "warn").length;
+  const v = $("verdict");
+  if (failed(res)) { v.className = "verdict fail"; v.textContent = L().ui.verdictFail; }
+  else { v.className = "verdict ok"; v.textContent = warns ? L().ui.verdictWarn(warns) : L().ui.verdictOk; }
+}
 
 async function processFile(file) {
   if (!file) return;
-  status("İşleniyor…");
+  status("processing");
   await ready;
   const img = await loadImage(file);
   const res = analyze(img);
@@ -466,31 +793,28 @@ async function processFile(file) {
   $("result").classList.remove("hidden");
   $("out").classList.add("hidden");
   drawSourceView(res);
-  const order = { fail: 0, warn: 1, fix: 2, ok: 3 };
-  $("checks").innerHTML = res.checks.slice().sort((a, b) => order[a.status] - order[b.status]).map(c =>
-    `<li class="${c.status}"><span class="ic">${ICON[c.status]}</span><div><div class="t">${c.title}</div>${c.detail ? `<div class="d">${c.detail}</div>` : ""}</div></li>`).join("");
-
-  const fails = res.checks.filter(c => c.status === "fail").length;
-  const warns = res.checks.filter(c => c.status === "warn").length;
-  const v = $("verdict");
-  if (fails || !res.geo) {
-    v.className = "verdict fail";
-    v.textContent = "Bu fotoğraf düzeltilemez — yeniden çekin. Kırmızı maddelere bakın.";
+  renderChecks(res);
+  if (failed(res)) {
     $("bgOpt").classList.add("hidden");
+    setStep(2);
   } else {
-    v.className = "verdict ok";
-    v.textContent = warns ? `Uygun, ${warns} uyarıyla. Uyarıları gözden geçirin.` : "Uygun. Fotoğraf hazırlandı.";
     $("bgOpt").classList.remove("hidden");
     $("whiten").checked = false;
     await renderOutputs();
+    setStep(3);
   }
-  status("Bitti.");
+  status("done");
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-$("file").addEventListener("change", e => processFile(e.target.files[0]).catch(err => status("Hata: " + err.message)));
-$("cam").addEventListener("change", e => processFile(e.target.files[0]).catch(err => status("Hata: " + err.message)));
+const onPick = e => processFile(e.target.files[0]).catch(err => status("error", err.message)).finally(() => { e.target.value = ""; });
+$("file").addEventListener("change", onPick);
+$("cam").addEventListener("change", onPick);
 $("whiten").addEventListener("change", () => current && renderOutputs());
 window.__processFile = processFile;   // for automated testing
+
+applyLang();
+setStep(1);
 </script>
 </body>
 </html>

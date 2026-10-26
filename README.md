@@ -10,4 +10,6 @@ python3 -m http.server 8765 --directory ~/projects/passport-photo
 
 Sonra tarayıcıda `http://localhost:8765` açılır. Telefondan kamerayla denemek için sayfanın HTTPS üzerinden yayınlanması gerekir (ör. GitHub Pages).
 
-Bilinen sınırlar: eşikler (netlik, gölge, gözlük) gerçek bir fotoğraf setiyle ayarlanmadı; gözlük ve başlık tespiti tahminidir.
+Arayüz Türkçe ve İngilizce (sağ üstten seçilir). Gözlük kontrolü burun köprüsündeki çerçeve kenarını ölçer: Wikimedia portrelerinde 71 gözlüklünün 67'sini yakaladı, gözlüksüz 32 portrede yanlış alarm vermedi.
+
+Bilinen sınırlar: netlik ve gölge eşikleri gerçek telefon fotoğraflarıyla ayarlanmadı; başlık tespiti tahminidir.

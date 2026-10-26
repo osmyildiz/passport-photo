@@ -53,8 +53,12 @@
   .pick.alt { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
   .pick svg { width: 20px; height: 20px; }
   .pick input { display: none; }
-  .privacy { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); font-size: .9rem; }
-  .privacy svg { width: 16px; height: 16px; flex: none; color: var(--ok); }
+  .privacy { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--ok-bg); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); max-width: 720px; }
+  .privacy svg { width: 26px; height: 26px; flex: none; color: var(--ok); margin-top: 1px; }
+  .privacy b { display: block; color: var(--ok); font-size: 1rem; }
+  .privacy span { display: block; color: var(--ink); font-size: .88rem; margin-top: 2px; }
+  .local { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--ok); font-size: .88rem; font-weight: 600; }
+  .local svg { width: 16px; height: 16px; flex: none; }
 
   .steps { display: flex; gap: 6px; margin: 18px 0 0; padding: 0; list-style: none; counter-reset: s; flex-wrap: wrap; }
   .steps li { counter-increment: s; display: flex; align-items: center; gap: 8px; font-size: .88rem; color: var(--muted); padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--bg); }
@@ -119,6 +123,22 @@
   .tips li b { color: var(--brand); font-size: 1.05rem; line-height: 1.3; }
   details summary { cursor: pointer; font-weight: 600; }
   details p { color: var(--muted); font-size: .9rem; margin: 10px 0 0; }
+  .cvs > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 10px; border: 1.5px solid var(--brand); color: var(--brand); }
+  .cvs > summary::-webkit-details-marker { display: none; }
+  .cvs > summary svg { width: 18px; height: 18px; transition: transform .2s; }
+  .cvs[open] > summary svg.chev { transform: rotate(180deg); }
+  .cvs-steps { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+  .cvs-steps li { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--bg); }
+  .cvs-steps svg { width: 58px; flex: none; }
+  .cvs-steps b { display: block; font-size: .92rem; }
+  .cvs-steps b i { font-style: normal; color: var(--brand); margin-right: 4px; }
+  .cvs-steps span { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+  .cvs-link { display: inline-block; margin-top: 12px; color: var(--brand); font-weight: 600; font-size: .9rem; }
+  .m-f { fill: var(--muted); } .m-s { fill: var(--card); } .m-r { fill: var(--line); }
+  .m-h { fill: var(--brand); } .m-ht { fill: var(--brand-ink); } .m-t { fill: var(--muted); }
+  .m-o { fill: none; stroke: var(--brand); stroke-width: 1.6; } .m-p { fill: #fff; stroke: var(--muted); stroke-width: 1; }
+  .m-d { fill: none; stroke: var(--muted); stroke-width: .8; stroke-dasharray: 1 2; } .m-a { fill: none; stroke: var(--brand); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .m-ph { fill: #c9d3e3; } .m-pf { fill: #8a96aa; }
   footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 28px; }
   .hidden { display: none !important; }
 </style>
@@ -143,6 +163,10 @@
   <section class="card">
     <h1 data-i18n="title"></h1>
     <p class="lead" data-i18n="lead"></p>
+    <div class="privacy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div><b data-i18n="privacyH"></b><span data-i18n="privacy"></span></div>
+    </div>
     <div class="pickers">
       <label class="pick">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -152,10 +176,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
         <span data-i18n="file"></span><input id="file" type="file" accept="image/*">
       </label>
-    </div>
-    <div class="privacy">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-      <span data-i18n="privacy"></span>
     </div>
     <ol class="steps" id="steps">
       <li data-i18n="step1"></li><li data-i18n="step2"></li><li data-i18n="step3"></li>
@@ -202,12 +222,21 @@
           <p class="note" data-i18n-html="printNote"></p>
         </div>
       </div>
+      <p class="local"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span data-i18n="localNote"></span></p>
     </section>
   </section>
 
   <section class="card">
     <h2 data-i18n="tipsH"></h2>
     <ul class="tips" id="tips"></ul>
+  </section>
+
+  <section class="card">
+    <details class="cvs">
+      <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2"/><rect x="6" y="14" width="12" height="7"/></svg><span data-i18n="cvsBtn"></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <ol class="cvs-steps" id="cvsSteps"></ol>
+      <a class="cvs-link" href="https://www.cvs.com/photo/photo-prints-prodid-7201007" target="_blank" rel="noopener" data-i18n="cvsLink"></a>
+    </details>
   </section>
 
   <section class="card">
@@ -246,7 +275,18 @@ const I18N = {
       title: "ABD pasaport fotoğrafı, dakikalar içinde",
       lead: "Fotoğrafı çekin ya da yükleyin. Önce ABD pasaport şartlarına uygun olup olmadığına bakılır; düzeltilemeyecek bir sorun yoksa 2×2 inçlik dijital fotoğraf ve 4×6 inçlik baskı sayfası hazırlanır.",
       cam: "Kamerayla çek", file: "Dosyadan seç",
-      privacy: "Fotoğraf hiçbir sunucuya gönderilmez; her şey bu cihazda işlenir.",
+      privacyH: "Fotoğrafınız bu cihazdan çıkmaz",
+      privacy: "Kontrol ve düzenleme tamamen telefonunuzda ya da bilgisayarınızda yapılır; fotoğraf hiçbir sunucuya yüklenmez, kaydedilmez. İsterseniz deneyin: sayfa açıldıktan sonra uçak modunu açın, uygulama yine çalışır.",
+      localNote: "Bu dosyalar bu cihazda oluşturuldu; hiçbir yere gönderilmedi.",
+      cvsBtn: "CVS'den nasıl sipariş verilir?",
+      cvsLink: "CVS 4×6 baskı sayfasını aç →",
+      cvsSteps: [
+        ["Baskı sayfasını indirin", "Yukarıdaki \"Baskı sayfası (4×6 inç)\" düğmesiyle dosyayı telefona kaydedin."],
+        ["cvs.com/photo → Prints", "Prints menüsünden \"Photo Print, Glossy, 4x6\" ürününü açın."],
+        ["4x6 ve Pickup seçin", "Boyut 4x6, teslim Pickup (yaklaşık 1 saat). Glossy ya da Matte ikisi de olur. Mağazayı kontrol edip Create now'a basın."],
+        ["Dosyayı yükleyin", "İndirdiğiniz sayfayı seçin. Kırpma çerçevesi sayfanın tamamını kapsamalı; dosya zaten tam 4×6 olduğu için hiçbir yer kesilmemeli."],
+        ["Ödeyin, alın, kesin", "Sepetten siparişi tamamlayın, mağazadan alın. Kenardaki noktalı çizgiden girip gri çerçeve boyunca kesin."]
+      ],
       step1: "Çek ya da yükle", step2: "Kontrol", step3: "İndir ve bastır",
       loading: "Modeller yükleniyor…", ready: "Hazır. Bir fotoğraf seçin.", processing: "İşleniyor…", done: "",
       loadFail: "Modeller yüklenemedi: ", error: "Hata: ",
@@ -324,7 +364,18 @@ const I18N = {
       title: "A US passport photo in minutes",
       lead: "Take or upload a photo. It is first checked against US passport rules; if nothing unfixable is found, you get a 2×2 inch digital photo and a 4×6 inch print sheet.",
       cam: "Take photo", file: "Choose file",
-      privacy: "Your photo never leaves this device; everything runs in your browser.",
+      privacyH: "Your photo never leaves this device",
+      privacy: "Checking and editing happen entirely on your phone or computer; the photo is never uploaded or stored on a server. Try it: once the page has loaded, turn on airplane mode and it still works.",
+      localNote: "These files were made on this device and were not sent anywhere.",
+      cvsBtn: "How to order at CVS",
+      cvsLink: "Open the CVS 4×6 print page →",
+      cvsSteps: [
+        ["Download the print sheet", "Save the file to your phone with the \"Print sheet (4×6 in)\" button above."],
+        ["cvs.com/photo → Prints", "In the Prints menu, open \"Photo Print, Glossy, 4x6\"."],
+        ["Choose 4x6 and Pickup", "Size 4x6, Pickup (about 1 hour). Glossy or Matte are both fine. Check the store and tap Create now."],
+        ["Upload the file", "Pick the sheet you downloaded. The crop frame should cover the whole sheet; the file is already exactly 4×6, so nothing should be cut off."],
+        ["Pay, pick up, cut", "Check out and collect the prints at the store. Start at a dotted line on the paper edge and cut along the grey frame."]
+      ],
       step1: "Take or upload", step2: "Check", step3: "Download & print",
       loading: "Loading models…", ready: "Ready. Choose a photo.", processing: "Processing…", done: "",
       loadFail: "Could not load models: ", error: "Error: ",
@@ -427,11 +478,35 @@ const setStep = n => {
   [...$("steps").children].forEach((li, i) => { li.className = i + 1 < n ? "done" : i + 1 === n ? "on" : ""; });
 };
 
+// mini drawings for the CVS steps (generic screens, not CVS's own UI)
+const PHONE = inner => `<svg viewBox="0 0 64 112" aria-hidden="true"><rect class="m-f" x="2" y="2" width="60" height="108" rx="9"/><rect class="m-s" x="6" y="10" width="52" height="92" rx="3"/>${inner}</svg>`;
+const SHEET = (x, y, w, guides) => { const h = w * 2 / 3, s = w * 0.36, g = (w - 2 * s) / 3, t = y + (h - s) / 2;
+  const d = guides ? [x + g, x + g + s, x + 2 * g + s, x + 2 * g + 2 * s].map(v => `M${v} ${y}v${h}`).join("") + [t, t + s].map(v => `M${x} ${v}h${w}`).join("") : "";
+  return `<rect class="m-p" x="${x}" y="${y}" width="${w}" height="${h}"/>` + (d && `<path class="m-d" d="${d}"/>`) + [x + g, x + 2 * g + s].map(px =>
+    `<rect class="m-ph" x="${px}" y="${t}" width="${s}" height="${s}"/><circle class="m-pf" cx="${px + s / 2}" cy="${t + s * .4}" r="${s * .18}"/><path class="m-pf" d="M${px + s * .2} ${t + s}q${s * .3} -${s * .45} ${s * .6} 0z"/>`).join(""); };
+const TXT = (x, y, t, c = "m-t", sz = 5) => `<text class="${c}" x="${x}" y="${y}" font-size="${sz}" font-family="-apple-system,Helvetica,Arial,sans-serif" font-weight="600">${t}</text>`;
+const CVS_ART = [
+  `<svg viewBox="0 0 64 112" aria-hidden="true">${SHEET(4, 24, 56)}<path class="m-a" d="M32 72v24m-8-8l8 8 8-8"/></svg>`,
+  PHONE(`<rect class="m-r" x="6" y="10" width="52" height="9"/>${TXT(10, 16.5, "cvs.com/photo", "m-t", 4.5)}
+    ${TXT(10, 28, "Cards")}<rect class="m-o" x="8" y="31" width="30" height="9" rx="2"/>${TXT(10, 37.5, "Prints", "m-t", 5.5)}${TXT(10, 49, "Posters")}
+    <rect class="m-h" x="10" y="56" width="44" height="34" rx="3"/>${SHEET(16, 60, 32).replace(/m-p"/, 'm-p" opacity=".95"')}${TXT(14, 86, "Photo Print 4x6", "m-ht", 5)}`),
+  PHONE(`${TXT(10, 22, "Size")}<rect class="m-r" x="9" y="26" width="13" height="9" rx="2"/>${TXT(10.5, 32.3, "4x4", "m-t", 4.5)}
+    <rect class="m-h" x="25" y="26" width="13" height="9" rx="2"/>${TXT(26.5, 32.3, "4x6", "m-ht", 4.5)}<rect class="m-r" x="41" y="26" width="13" height="9" rx="2"/>${TXT(42.5, 32.3, "5x7", "m-t", 4.5)}
+    ${TXT(10, 48, "How to get it")}<rect class="m-o" x="9" y="52" width="45" height="13" rx="2"/>${TXT(12, 60.5, "Pickup · 1 hour", "m-t", 5)}
+    <rect class="m-r" x="9" y="68" width="45" height="9" rx="2"/>${TXT(12, 74.3, "Delivery", "m-t", 4.5)}
+    <rect class="m-h" x="9" y="86" width="45" height="11" rx="3"/>${TXT(18, 93.5, "Create now", "m-ht", 5.5)}`),
+  PHONE(`${TXT(10, 22, "Upload")}${SHEET(10, 30, 44)}<rect class="m-o" x="8" y="28" width="48" height="33.3" rx="1" stroke-dasharray="3 2"/>
+    <circle cx="50" cy="66" r="6" style="fill:var(--ok)"/><path d="M47 66l2 2 4-4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect class="m-h" x="9" y="86" width="45" height="11" rx="3"/>${TXT(17, 93.5, "Add to cart", "m-ht", 5.5)}`),
+  `<svg viewBox="0 0 64 112" aria-hidden="true">${SHEET(12, 38, 50, true)}<g transform="translate(0 39.7) scale(.5)" fill="none" style="stroke:var(--brand)" stroke-width="2.4" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/></g></svg>`
+];
+
 function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = L().ui[el.dataset.i18n]; });
   document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = L().ui[el.dataset.i18nHtml]; });
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  $("cvsSteps").innerHTML = L().ui.cvsSteps.map(([h, t], i) => `<li>${CVS_ART[i]}<div><b><i>${i + 1}</i>${h}</b><span>${t}</span></div></li>`).join("");
   $("tips").innerHTML = L().ui.tips.map((t, i) => `<li><b>${i + 1}</b><span>${t}</span></li>`).join("");
   $("dlDigital").download = L().ui.fileDigital;
   $("dlSheet").download = L().ui.fileSheet;

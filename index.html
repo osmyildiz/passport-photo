@@ -60,7 +60,7 @@
         <ul id="checks" class="checks"></ul>
         <div id="bgOpt" class="opt hidden">
           <label><input type="checkbox" id="whiten"> Arka planı beyaza çevir</label>
-          <div class="note">Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor. En güvenlisi beyaz ya da kirli beyaz bir duvarın önünde yeniden çekmek.</div>
+          <div class="note">Kişinin arkasındaki alanı beyaza çevirir; yüz ve saç değişmez. Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor; en güvenlisi beyaz ya da kirli beyaz bir duvarın önünde çekmek. Saç kenarlarını önizlemede kontrol edin.</div>
         </div>
       </div>
     </div>
@@ -357,13 +357,13 @@ function renderPhoto(img, geo, whiten) {
   const ctx = out.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, S, S);
   ctx.imageSmoothingQuality = "high";
-  const draw = (src, w, h) => {
+  const draw = (src, x, y, w, h) => {
     ctx.save();
     ctx.translate(geo.T.x, geo.T.y); ctx.scale(geo.sc, geo.sc); ctx.rotate(-geo.roll); ctx.translate(-geo.E.x, -geo.E.y);
-    ctx.drawImage(src, 0, 0, w, h);
+    ctx.drawImage(src, x, y, w, h);
     ctx.restore();
   };
-  draw(img, geo.W, geo.H);
+  draw(img, 0, 0, geo.W, geo.H);
   if (whiten) {
     const mc = document.createElement("canvas"); mc.width = geo.mw; mc.height = geo.mh;
     const mctx = mc.getContext("2d"), id = mctx.createImageData(geo.mw, geo.mh);
@@ -372,7 +372,9 @@ function renderPhoto(img, geo, whiten) {
       id.data[i * 4 + 3] = Math.round(clamp((geo.bgConf[i] - 0.2) / 0.6, 0, 1) * 255);
     }
     mctx.putImageData(id, 0, 0);
-    draw(mc, geo.W, geo.H);
+    // overhang the photo by a few pixels so its anti-aliased border does not show as a grey seam
+    const pad = 4 / geo.sc;
+    draw(mc, -pad, -pad, geo.W + 2 * pad, geo.H + 2 * pad);
   }
   return out;
 }
@@ -478,7 +480,7 @@ async function processFile(file) {
   } else {
     v.className = "verdict ok";
     v.textContent = warns ? `Uygun, ${warns} uyarıyla. Uyarıları gözden geçirin.` : "Uygun. Fotoğraf hazırlandı.";
-    $("bgOpt").classList.toggle("hidden", !res.geo.bgFixable);
+    $("bgOpt").classList.remove("hidden");
     $("whiten").checked = false;
     await renderOutputs();
   }

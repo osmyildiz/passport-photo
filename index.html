@@ -1,10 +1,15 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b3d91">
-<title>Pasaport Fotoğrafı</title>
+<title>US Passport Photo</title>
+<meta name="description" content="Check a photo against US passport rules and make a 2×2 in photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
+<meta property="og:title" content="US Passport Photo">
+<meta property="og:description" content="Check a photo against US passport rules and make a 2×2 in photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://osmyildiz.github.io/passport-photo/">
 <style>
   :root {
     --bg: #f4f6fa; --card: #ffffff; --ink: #14181f; --muted: #5d6675; --line: #e3e7ee;
@@ -424,7 +429,6 @@ const setStep = n => {
 
 function applyLang() {
   document.documentElement.lang = lang;
-  document.title = L().ui.brand;
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = L().ui[el.dataset.i18n]; });
   document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = L().ui[el.dataset.i18nHtml]; });
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));

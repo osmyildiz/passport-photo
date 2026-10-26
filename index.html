@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b3d91">
-<title>US Passport Photo</title>
-<meta name="description" content="Check a photo against US passport rules and make a 2×2 in photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
-<meta property="og:title" content="US Passport Photo">
-<meta property="og:description" content="Check a photo against US passport rules and make a 2×2 in photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
+<title>Passport & Visa Photo</title>
+<meta name="description" content="Check a photo against US passport, Turkish passport or Schengen visa rules and make the photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
+<meta property="og:title" content="Passport &amp; Visa Photo">
+<meta property="og:description" content="Check a photo against US passport, Turkish passport or Schengen visa rules and make the photo and a 4×6 print sheet. Runs in your browser; the photo is never uploaded.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://osmyildiz.github.io/passport-photo/">
 <style>
@@ -39,6 +39,9 @@
   .lang { display: inline-flex; border: 1px solid currentColor; border-radius: 999px; overflow: hidden; }
   .lang button { all: unset; cursor: pointer; padding: 4px 12px; font-size: .85rem; font-weight: 600; }
   .lang button[aria-pressed="true"] { background: var(--brand-ink); color: var(--brand); }
+  nav.tabs { max-width: 1040px; margin: 0 auto; padding: 0 16px; display: flex; gap: 4px; }
+  nav.tabs a { padding: 8px 14px 10px; color: var(--brand-ink); opacity: .75; text-decoration: none; font-weight: 600; font-size: .92rem; border-bottom: 3px solid transparent; }
+  nav.tabs a[aria-current="page"] { opacity: 1; border-color: var(--brand-ink); }
 
   main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 64px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px; }
@@ -57,6 +60,16 @@
   .privacy svg { width: 26px; height: 26px; flex: none; color: var(--ok); margin-top: 1px; }
   .privacy b { display: block; color: var(--ok); font-size: 1rem; }
   .privacy span { display: block; color: var(--ink); font-size: .88rem; margin-top: 2px; }
+  .fmt { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 720px; }
+  .fmt legend { padding: 0; margin-bottom: 8px; font-weight: 650; font-size: .95rem; }
+  .fmt label { position: relative; cursor: pointer; }
+  .fmt input { position: absolute; opacity: 0; pointer-events: none; }
+  .fmt span { display: flex; flex-direction: column; gap: 2px; height: 100%; box-sizing: border-box; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); }
+  .fmt span b { font-size: .9rem; line-height: 1.2; }
+  .fmt span small { color: var(--muted); font-size: .8rem; }
+  .fmt input:checked + span { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand) inset; }
+  .fmt input:checked + span small { color: var(--brand); font-weight: 600; }
+  .fmt input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px; }
   .local { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; color: var(--ok); font-size: .88rem; font-weight: 600; }
   .local svg { width: 16px; height: 16px; flex: none; }
 
@@ -157,6 +170,7 @@
       <button type="button" data-lang="en">EN</button>
     </div>
   </div>
+  <nav class="tabs"><a href="./" aria-current="page" data-i18n="tabPhoto"></a><a href="doc.html" data-i18n="tabDoc"></a></nav>
 </header>
 
 <main>
@@ -167,6 +181,12 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
       <div><b data-i18n="privacyH"></b><span data-i18n="privacy"></span></div>
     </div>
+    <fieldset class="fmt">
+      <legend data-i18n="fmtH"></legend>
+      <label><input type="radio" name="fmt" value="us"><span data-fmt="us"></span></label>
+      <label><input type="radio" name="fmt" value="tr"><span data-fmt="tr"></span></label>
+      <label><input type="radio" name="fmt" value="eu"><span data-fmt="eu"></span></label>
+    </fieldset>
     <div class="pickers">
       <label class="pick">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
@@ -257,11 +277,20 @@ const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmar
 const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
 // US Department of State, 2x2 inch photo. Everything below is a fraction of the photo side.
-const S = 600;                              // 2 in at 300 dpi
-const HEAD_MIN = 1.0 / 2, HEAD_MAX = 1.375 / 2;   // chin to top of hair
-const EYE_MIN = 1.125 / 2, EYE_MAX = 1.375 / 2;   // eye line above the bottom edge
-const HEAD_TARGET = 0.60, EYE_TARGET_FROM_TOP = 0.38;
-const DIGITAL_MAX_BYTES = 240 * 1024;
+// Photo formats at 300 dpi. head = chin to top of hair; eye = eye line above the bottom edge;
+// top = gap above the hair. All as fractions of the photo height.
+const FORMATS = {
+  us: { w: 600, h: 600, n: 2, head: [1.0 / 2, 1.375 / 2], headT: 0.60, eye: [1.125 / 2, 1.375 / 2], eyeT: 0.38,
+        unit: "in", per: 2, digitalMax: 240 * 1024, noGlasses: true, label: "2 × 2 in  ·  5.1 cm" },
+  // NVI: 50 x 60 mm, white background; no official head size, 34 mm and a 10 mm top gap is common practice
+  tr: { w: 591, h: 709, n: 2, head: [31 / 60, 37 / 60], headT: 34 / 60, top: [8 / 60, 12 / 60], topT: 10 / 60,
+        unit: "mm", per: 60, label: "50 × 60 mm" },
+  // Schengen visa (Visa Code art. 13, ICAO): 35 x 45 mm, chin to crown 32-36 mm
+  eu: { w: 413, h: 531, n: 3, head: [32 / 45, 36 / 45], headT: 34 / 45, top: [2 / 45, 6 / 45], topT: 4 / 45,
+        unit: "mm", per: 45, label: "35 × 45 mm" }
+};
+let fmtKey = (() => { try { const f = localStorage.getItem("fmt"); if (FORMATS[f]) return f; } catch {} return "us"; })();
+const FMT = () => FORMATS[fmtKey];
 // Face shadow thresholds, as brightness relative to the well-lit skin (1 = equally bright).
 const SHADOW = { sideFail: 0.62, sideWarn: 0.78, area: { forehead: 0.8, underEye: 0.72, chin: 0.65 }, glare: 0.03 };
 const CLS = { BG: 0, HAIR: 1, BODY: 2, FACE: 3, CLOTHES: 4, OTHER: 5 };  // selfie_multiclass labels
@@ -271,9 +300,10 @@ const CLS = { BG: 0, HAIR: 1, BODY: 2, FACE: 3, CLOTHES: 4, OTHER: 5 };  // self
 const I18N = {
   tr: {
     ui: {
-      brand: "Pasaport Fotoğrafı",
-      title: "ABD pasaport fotoğrafı, dakikalar içinde",
-      lead: "Fotoğrafı çekin ya da yükleyin. Önce ABD pasaport şartlarına uygun olup olmadığına bakılır; düzeltilemeyecek bir sorun yoksa 2×2 inçlik dijital fotoğraf ve 4×6 inçlik baskı sayfası hazırlanır.",
+      brand: "Pasaport Fotoğrafı", tabPhoto: "Vesikalık fotoğraf", tabDoc: "Belge tarayıcı",
+      title: "Pasaport ve vize fotoğrafı, dakikalar içinde",
+      lead: (F, f) => `Belgeyi seçin, sonra fotoğrafı çekin ya da yükleyin. Önce ${f.rules} şartlarına uygun olup olmadığına bakılır; düzeltilemeyecek bir sorun yoksa ${f.size} dijital fotoğraf ve 4×6 inçlik baskı sayfası hazırlanır.`,
+      fmtH: "Fotoğraf hangi belge için?",
       cam: "Kamerayla çek", file: "Dosyadan seç",
       privacyH: "Fotoğrafınız bu cihazdan çıkmaz",
       privacy: "Kontrol ve düzenleme tamamen telefonunuzda ya da bilgisayarınızda yapılır; fotoğraf hiçbir sunucuya yüklenmez, kaydedilmez. İsterseniz deneyin: sayfa açıldıktan sonra uçak modunu açın, uygulama yine çalışır.",
@@ -300,15 +330,29 @@ const I18N = {
       recommended: "Önerilir", whyH: "Ne yapar, ne zaman kullanmalı?",
       whitenNote: "Arkanızdaki alanı beyaza çevirir; yüz ve saç değişmez. Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor; en güvenlisi beyaz ya da kirli beyaz bir duvarın önünde çekmek. Saç kenarlarını önizlemede kontrol edin.",
       outputsH: "Hazır fotoğraflar",
-      dlDigital: "Dijital (600×600)", dlSheet: "Baskı sayfası (4×6 inç)",
-      digitalNote: "600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için.",
-      printNote: "Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. Makasla kâğıdın kenarından noktalı çizgiye girin ve fotoğrafın ince gri çerçevesi boyunca kesin; iki adet 2×2 inç fotoğraf çıkar. Çıktıyı cetvelle ölçün: her kare tam 2 inç (5,1 cm) olmalı.",
+      dlDigital: F => `Dijital (${F.w}×${F.h})`, dlSheet: "Baskı sayfası (4×6 inç)",
+      digitalNote: F => F.digitalMax ? "600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için." : `${F.w}×${F.h} piksel, 300 dpi JPEG — çevrim içi başvuru ya da tek baskı için.`,
+      printNote: (F, f) => `Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. Makasla kâğıdın kenarından noktalı çizgiye girin ve fotoğrafın ince gri çerçevesi boyunca kesin; ${F.n === 2 ? "iki" : "üç"} adet ${f.size} fotoğraf çıkar. Çıktıyı cetvelle ölçün: ${f.measure}`,
       tipsH: "İyi bir fotoğraf için",
       tips: ["Beyaz ya da kirli beyaz bir duvarın önünde durun.", "Gün ışığında pencereye dönün; ışık önden ve eşit gelsin.", "Tavan lambasını kapatın: tepeden gelen ışık göz altına ve çeneye gölge düşürür.", "Flaş kullanmayın; yüzde parlama ve arkada gölge yapar.", "Gözlüğü çıkarın, kameraya düz bakın, ağzınız kapalı olsun.", "Fotoğrafı başkası çeksin: yaklaşık 1 metreden, göz hizasından.", "Baş ve omuzlar kadraja rahatça sığsın."],
       aboutH: "Neye bakılıyor?",
-      aboutBody: "Tek yüz; başın kameraya düz bakması; gözlerin açık, ağzın kapalı ve ifadenin doğal olması; gözlük olmaması; netlik; yüzde yandan gelen gölge olmaması; arka planın beyaz ya da kirli beyaz ve düz olması; çözünürlük. Ardından fotoğraf, çeneden saçın tepesine kadar olan yükseklik 1–1⅜ inç ve gözler alttan 1⅛–1⅜ inç olacak biçimde kırpılır. Eşikler henüz büyük bir fotoğraf setiyle ayarlanmadı; özellikle gözlük ve netlik kontrolleri tahminidir. Ölçüleri <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">resmî sayfadan</a> doğrulayın.",
-      footer: "Resmî bir hizmet değildir. Başvurunun kabulü ABD Dışişleri Bakanlığı'na aittir.",
-      fileDigital: "pasaport_2x2_600px.jpg", fileSheet: "pasaport_baski_4x6.jpg",
+      aboutBody: (F, f) => `Tek yüz; başın kameraya düz bakması; gözlerin açık, ağzın kapalı ve ifadenin doğal olması; gözlük; netlik; yüzde yandan gelen gölge olmaması; arka planın beyaz ya da kirli beyaz ve düz olması; çözünürlük. Ardından fotoğraf ${f.crop} biçimde kırpılır. Eşikler henüz büyük bir fotoğraf setiyle ayarlanmadı; özellikle gözlük ve netlik kontrolleri tahminidir. ${f.official}`,
+      footer: (F, f) => `Resmî bir hizmet değildir. Başvurunun kabulü ${f.authority} aittir.`,
+      fileDigital: (F, f) => `${f.file}_${F.w}x${F.h}.jpg`, fileSheet: (F, f) => `${f.file}_baski_4x6.jpg`,
+    },
+    fmt: {
+      us: { name: "ABD pasaportu", size: "2×2 inç", rules: "ABD pasaport", file: "abd_pasaport",
+            measure: "her kare tam 2 inç (5,1 cm) olmalı.",
+            crop: "çeneden saçın tepesine kadar olan yükseklik 1–1⅜ inç ve gözler alttan 1⅛–1⅜ inç olacak",
+            official: "Ölçüleri <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">resmî sayfadan</a> doğrulayın.", authority: "ABD Dışişleri Bakanlığı'na" },
+      tr: { name: "Türk pasaportu ve kimliği", size: "50×60 mm", rules: "Türk biyometrik fotoğraf", file: "tc_biyometrik",
+            measure: "her fotoğraf tam 5×6 cm olmalı.",
+            crop: "çeneden saçın tepesine yaklaşık 34 mm ve saçın üstünde yaklaşık 10 mm boşluk kalacak",
+            official: "Nüfus müdürlüğü 50×60 mm ölçüsünü ve beyaz fonu şart koşuyor, baş ölçüsü için sayı yayımlamıyor; 34 mm fotoğrafçıların yaygın uygulamasıdır. <a href=\"https://www.nvi.gov.tr/istanbul/biyometrik-fotograf-nasil-olmalidir\" target=\"_blank\" rel=\"noopener\">Resmî sayfa</a>.", authority: "Nüfus ve Vatandaşlık İşleri Genel Müdürlüğü'ne" },
+      eu: { name: "Schengen vizesi", size: "35×45 mm", rules: "Schengen vize fotoğrafı", file: "schengen_vize",
+            measure: "her fotoğraf tam 3,5×4,5 cm olmalı.",
+            crop: "çeneden saçın tepesine 32–36 mm ve saçın üstünde 2–6 mm boşluk kalacak",
+            official: "Bazı konsolosluklar ek kural koyar; başvuracağınız konsolosluğun sayfasından doğrulayın.", authority: "başvurduğunuz konsolosluğa" }
     },
     bg: { dark: "yeterince açık değil", busy: "düz değil (desen, gölge ya da eşya var)", colored: "renkli" },
     c: {
@@ -340,7 +384,9 @@ const I18N = {
       resLow: p => ["Çözünürlük düşük", `Baş ${p.px} piksel yüksekliğinde; en az 300 civarı gerekir. Daha yakından ya da daha iyi bir kamerayla çekin.`],
       resEdge: p => ["Çözünürlük sınırda", `Baş ${p.px} piksel; çıktı için biraz büyütüldü.`],
       resOk: p => ["Çözünürlük yeterli", `Baş ${p.px} piksel yüksekliğinde.`],
-      geoOk: p => ["Ölçüler ayarlandı", `Baş yüksekliği ${p.h} inç (izin verilen 1–1,375). Gözler alttan ${p.e} inç (izin verilen 1,125–1,375).`],
+      geoOk: p => ["Ölçüler ayarlandı", p.u === "in"
+        ? `Baş yüksekliği ${p.h} inç (izin verilen 1–1,375). Gözler alttan ${p.e} inç (izin verilen 1,125–1,375).`
+        : `Baş yüksekliği ${p.h} mm (hedef aralık ${p.h0}–${p.h1}). Saçın üstündeki boşluk ${p.e} mm (hedef aralık ${p.e0}–${p.e1}).`],
       bgOk: ["Arka plan beyaz ve düz", ""],
       bgBad: p => ["Arka plan uygun değil", `Arka plan ${p.why}. Beyaz bir duvarın önünde yeniden çekin ya da "Hazır fotoğraflar" bölümündeki "Arka planı beyaz yap" düğmesini açın.`],
       shadowSide: p => [`Yüzün ${p.s === "L" ? "sol" : "sağ"} yanı gölgede`, `Fotoğrafa bakınca ${p.s === "L" ? "sol" : "sağ"} taraf belirgin biçimde daha karanlık: ışık yandan geliyor. Işık kaynağına (pencereye) tam dönün; olmuyorsa karanlık tarafa, kadrajın dışından beyaz bir karton ya da kâğıt tutun — ışığı yüze geri yansıtır.`],
@@ -355,14 +401,16 @@ const I18N = {
       blurWarn: ["Netlik sınırda", "Mümkünse daha net bir kare çekin."],
       sharpOk: ["Fotoğraf net", ""],
       glasses: ["Gözlük var gibi", "ABD pasaport fotoğrafında gözlük yasak (tıbbi rapor hariç). Gözlük takıyorsanız çıkarıp yeniden çekin."],
+      glassesOk: ["Gözlük var gibi", "Bu belgede gözlüğe izin var, ama camda yansıma olmamalı ve çerçeve gözleri kapatmamalı. Emin olmak için gözlüksüz çekin."],
       hat: ["Şapka ya da başlık olabilir (tahmini)", "Başlık yalnız dinî ya da tıbbi gerekçeyle ve imzalı beyanla kabul edilir."],
     },
   },
   en: {
     ui: {
-      brand: "Passport Photo",
-      title: "A US passport photo in minutes",
-      lead: "Take or upload a photo. It is first checked against US passport rules; if nothing unfixable is found, you get a 2×2 inch digital photo and a 4×6 inch print sheet.",
+      brand: "Passport Photo", tabPhoto: "ID photo", tabDoc: "Document scanner",
+      title: "Passport and visa photos in minutes",
+      lead: (F, f) => `Pick the document, then take or upload a photo. It is first checked against ${f.rules} rules; if nothing unfixable is found, you get a ${f.size} digital photo and a 4×6 inch print sheet.`,
+      fmtH: "Which document is the photo for?",
       cam: "Take photo", file: "Choose file",
       privacyH: "Your photo never leaves this device",
       privacy: "Checking and editing happen entirely on your phone or computer; the photo is never uploaded or stored on a server. Try it: once the page has loaded, turn on airplane mode and it still works.",
@@ -389,15 +437,29 @@ const I18N = {
       recommended: "Recommended", whyH: "What does it do, when to use it?",
       whitenNote: "Turns the area behind you white; face and hair stay unchanged. Official rules ask that photos not be digitally altered, so a white or off-white wall is the safest choice. Check the hair edges in the preview.",
       outputsH: "Your photos",
-      dlDigital: "Digital (600×600)", dlSheet: "Print sheet (4×6 in)",
-      digitalNote: "600×600 px JPEG under 240 KB — for online renewal.",
-      printNote: "Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Start each cut at the paper edge on a dotted line and follow the thin grey frame of the photo to get two 2×2 in photos. Measure the print: each square must be exactly 2 in (5.1 cm).",
+      dlDigital: F => `Digital (${F.w}×${F.h})`, dlSheet: "Print sheet (4×6 in)",
+      digitalNote: F => F.digitalMax ? "600×600 px JPEG under 240 KB — for online renewal." : `${F.w}×${F.h} px, 300 dpi JPEG — for online applications or a single print.`,
+      printNote: (F, f) => `Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Start each cut at the paper edge on a dotted line and follow the thin grey frame of the photo to get ${F.n === 2 ? "two" : "three"} ${f.size} photos. Measure the print: ${f.measure}`,
       tipsH: "For a good photo",
       tips: ["Stand in front of a white or off-white wall.", "Face a window in daylight so light falls evenly from the front.", "Turn off ceiling lights: light from above casts shadows under the eyes and chin.", "Avoid flash; it causes shine on the face and a shadow behind you.", "Remove glasses, look straight at the camera, keep your mouth closed.", "Have someone else take it, about 1 m (3 ft) away, at eye level.", "Leave room for your head and shoulders in the frame."],
       aboutH: "What is checked?",
-      aboutBody: "One face; head facing the camera; eyes open, mouth closed, neutral expression; no glasses; sharpness; no side shadows on the face; plain white or off-white background; resolution. The photo is then cropped so that chin-to-top-of-hair is 1–1⅜ in and the eyes are 1⅛–1⅜ in above the bottom. Thresholds have not yet been tuned on a large photo set; the glasses and sharpness checks in particular are estimates. Confirm the measurements on the <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">official page</a>.",
-      footer: "Not an official service. Acceptance is decided by the US Department of State.",
-      fileDigital: "passport_2x2_600px.jpg", fileSheet: "passport_print_4x6.jpg",
+      aboutBody: (F, f) => `One face; head facing the camera; eyes open, mouth closed, neutral expression; glasses; sharpness; no side shadows on the face; plain white or off-white background; resolution. The photo is then cropped so that ${f.crop}. Thresholds have not yet been tuned on a large photo set; the glasses and sharpness checks in particular are estimates. ${f.official}`,
+      footer: (F, f) => `Not an official service. Acceptance is decided by ${f.authority}.`,
+      fileDigital: (F, f) => `${f.file}_${F.w}x${F.h}.jpg`, fileSheet: (F, f) => `${f.file}_print_4x6.jpg`,
+    },
+    fmt: {
+      us: { name: "US passport", size: "2×2 in", rules: "US passport", file: "us_passport",
+            measure: "each square must be exactly 2 in (5.1 cm).",
+            crop: "chin-to-top-of-hair is 1–1⅜ in and the eyes are 1⅛–1⅜ in above the bottom",
+            official: "Confirm the measurements on the <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">official page</a>.", authority: "the US Department of State" },
+      tr: { name: "Turkish passport & ID", size: "50×60 mm", rules: "Turkish biometric photo", file: "tr_biometric",
+            measure: "each photo must be exactly 5×6 cm.",
+            crop: "chin-to-top-of-hair is about 34 mm with about 10 mm of space above the hair",
+            official: "The Turkish population office requires 50×60 mm and a white background but publishes no head size; 34 mm is common practice among photographers. <a href=\"https://www.nvi.gov.tr/istanbul/biyometrik-fotograf-nasil-olmalidir\" target=\"_blank\" rel=\"noopener\">Official page (Turkish)</a>.", authority: "the Turkish General Directorate of Population and Citizenship Affairs" },
+      eu: { name: "Schengen visa", size: "35×45 mm", rules: "Schengen visa photo", file: "schengen_visa",
+            measure: "each photo must be exactly 3.5×4.5 cm.",
+            crop: "chin-to-top-of-hair is 32–36 mm with 2–6 mm of space above the hair",
+            official: "Some consulates add their own rules; confirm on the page of the consulate you apply to.", authority: "the consulate you apply to" }
     },
     bg: { dark: "not light enough", busy: "not plain (pattern, shadow or objects)", colored: "colored" },
     c: {
@@ -429,7 +491,9 @@ const I18N = {
       resLow: p => ["Resolution too low", `Your head is ${p.px} pixels tall; about 300 is needed. Move closer or use a better camera.`],
       resEdge: p => ["Resolution borderline", `Your head is ${p.px} pixels; it was enlarged slightly.`],
       resOk: p => ["Resolution OK", `Your head is ${p.px} pixels tall.`],
-      geoOk: p => ["Size adjusted", `Head height ${p.h} in (allowed 1–1.375). Eyes ${p.e} in above the bottom (allowed 1.125–1.375).`],
+      geoOk: p => ["Size adjusted", p.u === "in"
+        ? `Head height ${p.h} in (allowed 1–1.375). Eyes ${p.e} in above the bottom (allowed 1.125–1.375).`
+        : `Head height ${p.h} mm (target range ${p.h0}–${p.h1}). Gap above the hair ${p.e} mm (target range ${p.e0}–${p.e1}).`],
       bgOk: ["Plain white background", ""],
       bgBad: p => ["Background not suitable", `The background is ${p.why}. Retake in front of a white wall, or switch on "Make background white" under "Your photos".`],
       shadowSide: p => [`Shadow on the ${p.s === "L" ? "left" : "right"} side of the face`, `Looking at the photo, the ${p.s === "L" ? "left" : "right"} side is clearly darker: the light comes from the side. Turn to face the light source (window) directly, or hold a white card or sheet of paper just outside the frame on the dark side to bounce light back.`],
@@ -444,6 +508,7 @@ const I18N = {
       blurWarn: ["Sharpness borderline", "Take a sharper shot if you can."],
       sharpOk: ["Photo is sharp", ""],
       glasses: ["Glasses detected", "Glasses are not allowed in US passport photos (except with a medical statement). If you wear them, take them off and retake."],
+      glassesOk: ["Glasses detected", "Glasses are allowed for this document, but the lenses must not reflect and the frame must not cover the eyes. To be safe, take the photo without them."],
       hat: ["Possible hat or head covering (estimate)", "Head coverings are accepted only for religious or medical reasons, with a signed statement."],
     },
   },
@@ -460,7 +525,7 @@ const checkText = c => {
   if (typeof e !== "function") return e;
   const p = { ...c.p };
   if (p.why) p.why = p.why.map(k => L().bg[k]).join(", ");
-  for (const k of ["a", "h", "e"]) if (typeof p[k] === "number") p[k] = num(p[k], k === "a" ? (p.d ?? 0) : 2);
+  for (const k of ["a", "h", "e", "h0", "h1", "e0", "e1"]) if (typeof p[k] === "number") p[k] = num(p[k], k === "a" ? (p.d ?? 0) : (p.dd ?? 2));
   for (const k of ["p", "px"]) if (typeof p[k] === "number") p[k] = num(p[k]);
   return e(p);
 };
@@ -503,13 +568,16 @@ const CVS_ART = [
 
 function applyLang() {
   document.documentElement.lang = lang;
-  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = L().ui[el.dataset.i18n]; });
-  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = L().ui[el.dataset.i18nHtml]; });
+  const t = k => { const v = L().ui[k]; return typeof v === "function" ? v(FMT(), L().fmt[fmtKey]) : v; };
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll("input[name=fmt]").forEach(r => { r.checked = r.value === fmtKey; });
+  document.querySelectorAll(".fmt [data-fmt]").forEach(el => { const f = L().fmt[el.dataset.fmt]; el.innerHTML = `<b>${f.name}</b><small>${f.size}</small>`; });
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   $("cvsSteps").innerHTML = L().ui.cvsSteps.map(([h, t], i) => `<li>${CVS_ART[i]}<div><b><i>${i + 1}</i>${h}</b><span>${t}</span></div></li>`).join("");
   $("tips").innerHTML = L().ui.tips.map((t, i) => `<li><b>${i + 1}</b><span>${t}</span></li>`).join("");
-  $("dlDigital").download = L().ui.fileDigital;
-  $("dlSheet").download = L().ui.fileSheet;
+  $("dlDigital").download = t("fileDigital");
+  $("dlSheet").download = t("fileSheet");
   status(statusKey, statusExtra);
   if (current) renderChecks(current.res);
 }
@@ -553,6 +621,7 @@ function loadImage(file) {
 // ---------------------------------------------------------------- analysis
 
 function analyze(img) {
+  const F = FMT(), OW = F.w, OH = F.h;
   const W = img.naturalWidth, H = img.naturalHeight;
   const k = Math.min(1, 1280 / Math.max(W, H));
   const work = document.createElement("canvas");
@@ -648,23 +717,24 @@ function analyze(img) {
   };
   const overflow = back => {
     let outside = 0, n = 0;
-    for (let v = 0; v <= S; v += S / 40) for (let u = 0; u <= S; u += S / 40) {
+    for (let v = 0; v <= OH; v += OH / 40) for (let u = 0; u <= OW; u += OW / 40) {
       const p = back(u, v); n++;
       if (p.x < 0 || p.y < 0 || p.x > W || p.y > H) outside++;
     }
     return outside / n;
   };
 
-  // Search the allowed head-size and eye-height ranges; prefer no overflow, then closeness to the target.
+  // Search the allowed head-size and eye-height (or top-gap) ranges; prefer no overflow, then closeness to the target.
   let geo = null;
-  for (let ratio = HEAD_MIN + 0.02; ratio <= HEAD_MAX - 0.04 + 1e-9; ratio += 0.01) {
-    const sc = ratio * S / headH;
-    const lo = Math.max(S * (1 - EYE_MAX), S * 0.03 - sc * topR.y);
-    const hi = Math.min(S * (1 - EYE_MIN), S * 0.97 - sc * chinR.y);
+  for (let ratio = F.head[0] + 0.02; ratio <= F.head[1] - 0.04 + 1e-9; ratio += 0.01) {
+    const sc = ratio * OH / headH;
+    const lo = Math.max(F.eye ? OH * (1 - F.eye[1]) : F.top[0] * OH - sc * topR.y, OH * 0.03 - sc * topR.y);
+    const hi = Math.min(F.eye ? OH * (1 - F.eye[0]) : F.top[1] * OH - sc * topR.y, OH * 0.97 - sc * chinR.y);
     for (let eyeOut = lo; eyeOut <= hi; eyeOut += 3) {
-      const T = { x: S / 2 - sc * fcR.x, y: eyeOut };
+      const T = { x: OW / 2 - sc * fcR.x, y: eyeOut };
       const of = overflow(backFor(sc, T));
-      const score = of * 100 + Math.abs(ratio - HEAD_TARGET) * 10 + Math.abs(eyeOut / S - EYE_TARGET_FROM_TOP) * 5;
+      const pos = F.eye ? eyeOut / OH - F.eyeT : (eyeOut + sc * topR.y) / OH - F.topT;
+      const score = of * 100 + Math.abs(ratio - F.headT) * 10 + Math.abs(pos) * 5;
       if (!geo || score < geo.score) geo = { ratio, sc, eyeOut, T, of, score };
     }
   }
@@ -672,21 +742,23 @@ function analyze(img) {
     add("fail", "geoFail");
     return { checks, work };
   }
-  Object.assign(geo, { E, roll, W, H, mw, mh, bgConf, chin, top });
+  Object.assign(geo, { E, roll, W, H, mw, mh, bgConf, chin, top, fmt: fmtKey, topY: (geo.eyeOut + geo.sc * topR.y) / OH });
   geo.back = backFor(geo.sc, geo.T);   // also used for the preview square
   const outFrac = geo.of;
   if (outFrac > 0.03) add("fail", "frameTight", { p: outFrac * 100 });
   else if (outFrac > 0) add("warn", "frameEdge");
 
   if (headH < 240) add("fail", "resLow", { px: headH });
-  else if (headH < geo.ratio * S) add("warn", "resEdge", { px: headH });
+  else if (headH < geo.ratio * OH) add("warn", "resEdge", { px: headH });
   else add("ok", "resOk", { px: headH });
 
-  add("ok", "geoOk", { h: geo.ratio * 2, e: (S - geo.eyeOut) / S * 2 });
+  const u = F.per, mm = F.unit === "mm";
+  add("ok", "geoOk", { u: F.unit, dd: mm ? 1 : 2, h: geo.ratio * u, h0: F.head[0] * u, h1: F.head[1] * u,
+    e: mm ? geo.topY * u : (OH - geo.eyeOut) / OH * u, e0: (F.eye || F.top)[0] * u, e1: (F.eye || F.top)[1] * u });
 
   // --- pixel statistics on the work canvas
   const data = wctx.getImageData(0, 0, ww, wh).data;
-  const xL = (fcX - (S / 2) / geo.sc) * k, xR = (fcX + (S / 2) / geo.sc) * k;
+  const xL = (fcX - (OW / 2) / geo.sc) * k, xR = (fcX + (OW / 2) / geo.sc) * k;
   const fxMid = P(1).x * k;
   let bgN = 0, bgL = 0, bgL2 = 0, bgSat = 0, fL = [0, 0], fN = [0, 0];
   for (let y = 0; y < wh; y += 2) for (let x = 0; x < ww; x += 2) {
@@ -799,7 +871,7 @@ function analyze(img) {
     for (let x = bx - 0.18 * io; x <= bx + 0.18 * io; x += st) { s += Math.abs(lum2(x, y + st) - lum2(x, y - st)); n++; }
     bridge = Math.max(bridge, s / n / cheekRef);
   }
-  if (gl > 0.08 || bridge > 3.5) add("warn", "glasses");
+  if (gl > 0.08 || bridge > 3.5) add("warn", F.noGlasses ? "glasses" : "glassesOk");
   const hat = frac(fcX - 0.4 * faceW, top.y, fcX + 0.4 * faceW, forehead.y, CLS.OTHER);
   if (hat > 0.25) add("warn", "hat");
 
@@ -811,10 +883,11 @@ function analyze(img) {
 let current = null;
 
 function renderPhoto(img, geo, whiten) {
+  const F = FORMATS[geo.fmt];
   const out = document.createElement("canvas");
-  out.width = S; out.height = S;
+  out.width = F.w; out.height = F.h;
   const ctx = out.getContext("2d");
-  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, F.w, F.h);
   ctx.imageSmoothingQuality = "high";
   const draw = (src, x, y, w, h) => {
     ctx.save();
@@ -838,34 +911,37 @@ function renderPhoto(img, geo, whiten) {
   return out;
 }
 
-function renderSheet(photo) {
+function renderSheet(photo, F) {
   const sheet = document.createElement("canvas");
   sheet.width = 1800; sheet.height = 1200;                 // 6 x 4 in at 300 dpi
   const ctx = sheet.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1800, 1200);
-  const gap = 150, x0 = (1800 - 2 * S - gap) / 2, y0 = (1200 - S) / 2;
+  const pw = F.w, ph = F.h, n = F.n, gap = 150;
+  const x0 = (1800 - n * pw - (n - 1) * gap) / 2, y0 = (1200 - ph) / 2;
+  const xs = Array.from({ length: n }, (_, i) => x0 + i * (pw + gap));
   const markGap = 10;                                      // guides stop just short of the photo
   // dotted guides from the paper edge to each photo edge, so the scissors start on the line
-  const x1 = x0 + S + gap;
   ctx.strokeStyle = "#999"; ctx.lineWidth = 2; ctx.setLineDash([3, 9]); ctx.lineCap = "round";
   ctx.beginPath();
-  for (const cx of [x0 - 0.5, x0 + S + 0.5, x1 - 0.5, x1 + S + 0.5]) {
+  for (const x of xs) for (const cx of [x - 0.5, x + pw + 0.5]) {
     ctx.moveTo(cx, 0); ctx.lineTo(cx, y0 - markGap);
-    ctx.moveTo(cx, y0 + S + markGap); ctx.lineTo(cx, 1200);
+    ctx.moveTo(cx, y0 + ph + markGap); ctx.lineTo(cx, 1200);
   }
-  for (const cy of [y0 - 0.5, y0 + S + 0.5]) {
-    for (const [a, b] of [[0, x0], [x0 + S, x1], [x1 + S, 1800]]) {
+  const spans = [0, ...xs.flatMap(x => [x, x + pw]), 1800];
+  for (const cy of [y0 - 0.5, y0 + ph + 0.5]) {
+    for (let i = 0; i < spans.length; i += 2) {
+      const a = spans[i], b = spans[i + 1];
       ctx.moveTo(a ? a + markGap : 0, cy); ctx.lineTo(b < 1800 ? b - markGap : 1800, cy);
     }
   }
   ctx.stroke();
   ctx.setLineDash([]); ctx.lineCap = "butt";
-  for (const x of [x0, x0 + S + gap]) {
+  for (const x of xs) {
     ctx.drawImage(photo, x, y0);
     ctx.strokeStyle = "#bbb"; ctx.lineWidth = 1;
-    ctx.strokeRect(x - 0.5, y0 - 0.5, S + 1, S + 1);
+    ctx.strokeRect(x - 0.5, y0 - 0.5, pw + 1, ph + 1);
     ctx.fillStyle = "#777"; ctx.font = "28px -apple-system, Helvetica, Arial, sans-serif"; ctx.textAlign = "center";
-    ctx.fillText("✂  2 × 2 in  ·  5.1 cm", x + S / 2, y0 + S + 80);
+    ctx.fillText("✂  " + F.label, x + pw / 2, y0 + ph + 80);
   }
   return sheet;
 }
@@ -902,11 +978,12 @@ function setLink(id, blob) {
 
 async function renderOutputs() {
   const { img, res } = current;
+  const F = FORMATS[res.geo.fmt];
   const photo = renderPhoto(img, res.geo, $("whiten").checked);
-  const sheet = renderSheet(photo);
+  const sheet = renderSheet(photo, F);
   showCanvas("digital", photo);
   showCanvas("sheet", sheet);
-  setLink("dlDigital", await with300dpi(await jpegUnder(photo, DIGITAL_MAX_BYTES)));
+  setLink("dlDigital", await with300dpi(F.digitalMax ? await jpegUnder(photo, F.digitalMax) : await toBlob(photo, 0.95)));
   setLink("dlSheet", await with300dpi(await toBlob(sheet, 0.95)));
   $("out").classList.remove("hidden");
 }
@@ -919,7 +996,8 @@ function drawSourceView(res) {
   const k = res.k, g = res.geo;
   ctx.lineWidth = Math.max(2, cv.width / 300);
   ctx.strokeStyle = "#2b6cb0"; ctx.beginPath();
-  [[0, 0], [S, 0], [S, S], [0, S]].forEach(([u, v], i) => {
+  const F = FORMATS[g.fmt];
+  [[0, 0], [F.w, 0], [F.w, F.h], [0, F.h]].forEach(([u, v], i) => {
     const p = g.back(u, v); i ? ctx.lineTo(p.x * k, p.y * k) : ctx.moveTo(p.x * k, p.y * k);
   });
   ctx.closePath(); ctx.stroke();
@@ -948,7 +1026,10 @@ async function processFile(file) {
   if (!file) return;
   status("processing");
   await ready;
-  const img = await loadImage(file);
+  await showResult(await loadImage(file));
+}
+
+async function showResult(img) {
   const res = analyze(img);
   current = { img, res };
   window.__last = res;   // for automated testing
@@ -977,6 +1058,12 @@ const onPick = e => processFile(e.target.files[0]).catch(err => status("error", 
 $("file").addEventListener("change", onPick);
 $("cam").addEventListener("change", onPick);
 $("whiten").addEventListener("change", () => current && renderOutputs());
+document.querySelectorAll("input[name=fmt]").forEach(r => r.addEventListener("change", () => {
+  fmtKey = r.value;
+  try { localStorage.setItem("fmt", fmtKey); } catch {}
+  applyLang();
+  if (current) showResult(current.img).catch(err => status("error", err.message));
+}));
 window.__processFile = processFile;   // for automated testing
 
 applyLang();

@@ -12,4 +12,6 @@ Sonra tarayıcıda `http://localhost:8765` açılır. Telefondan kamerayla denem
 
 Arayüz Türkçe ve İngilizce (sağ üstten seçilir). Gözlük kontrolü burun köprüsündeki çerçeve kenarını ölçer: Wikimedia portrelerinde 71 gözlüklünün 67'sini yakaladı, gözlüksüz 32 portrede yanlış alarm vermedi.
 
-Bilinen sınırlar: netlik ve gölge eşikleri gerçek telefon fotoğraflarıyla ayarlanmadı; başlık tespiti tahminidir.
+Işık kontrolü yüzde yedi bölgenin (alın, göz altları, yanaklar, çene) parlaklığını karşılaştırır; yan ışık, tepeden gelen ışık ve parlama için ayrı öneri verir. Eşikler 73 stüdyo portresinin dağılımına göre seçildi (4 uyarı) ve yapay gölgeyle sınandı (güçlü gölgenin 80 örneğinden 76sı yakalandı).
+
+Bilinen sınırlar: eşikler gerçek telefon fotoğraflarıyla ayarlanmadı; başlık tespiti tahminidir.

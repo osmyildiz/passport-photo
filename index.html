@@ -82,10 +82,26 @@
   .t { font-weight: 600; }
   .d { color: var(--muted); font-size: .9rem; margin-top: 1px; }
 
-  .opt { margin-top: 12px; padding: 12px 14px; background: var(--fix-bg); border-radius: 12px; font-size: .92rem; }
-  .opt label { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
-  .opt input { width: 18px; height: 18px; accent-color: var(--brand); }
-  .opt .note { margin: 6px 0 0 28px; }
+  .opt { margin: 0 0 18px; padding: 14px 16px; background: var(--fix-bg); border: 2px solid var(--brand); border-radius: 14px; }
+  .opt.rec { animation: pulse 1.6s ease-out 3; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+  .opt-row { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+  .opt-ic { flex: none; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--brand); color: var(--brand-ink); }
+  .opt-ic svg { width: 22px; height: 22px; }
+  .opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+  .opt-text b { font-size: 1.02rem; }
+  .opt-text small { color: var(--muted); font-size: .86rem; margin-top: 2px; }
+  .badge { align-self: flex-start; margin-bottom: 4px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 3px 8px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .sw { flex: none; width: 50px; height: 30px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s; }
+  .opt input:checked + .sw { background: var(--ok); }
+  .opt input:checked + .sw::after { transform: translateX(20px); }
+  .opt input:focus-visible + .sw { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .why { margin: 10px 0 0 52px; font-size: .88rem; }
+  .why summary { color: var(--brand); font-weight: 600; }
+  .why p { margin: 6px 0 0; color: var(--muted); }
+  @media (max-width: 420px) { .why { margin-left: 0; } }
 
   .outputs { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .outputs { grid-template-columns: 1fr; } .outputs > div:first-child { max-width: 300px; } }
@@ -156,15 +172,19 @@
         <h2 data-i18n="checksH"></h2>
         <div id="verdict" class="verdict"></div>
         <ul id="checks" class="checks"></ul>
-        <div id="bgOpt" class="opt hidden">
-          <label><input type="checkbox" id="whiten"> <span data-i18n="whiten"></span></label>
-          <div class="note" data-i18n="whitenNote"></div>
-        </div>
       </div>
     </div>
 
     <section id="out" class="card hidden">
       <h2 data-i18n="outputsH"></h2>
+      <div id="bgOpt" class="opt">
+        <label class="opt-row">
+          <span class="opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l10-10m2-6v3m0 6v3m-5-6h3m6 0h3m-9.5-4.5l2 2m4 4l2 2m0-8l-2 2"/></svg></span>
+          <span class="opt-text"><span id="bgRec" class="badge hidden" data-i18n="recommended"></span><b data-i18n="whiten"></b><small data-i18n="whitenShort"></small></span>
+          <input type="checkbox" id="whiten" role="switch"><span class="sw" aria-hidden="true"></span>
+        </label>
+        <details class="why"><summary data-i18n="whyH"></summary><p data-i18n="whitenNote"></p></details>
+      </div>
       <div class="outputs">
         <div>
           <canvas id="digital" class="preview"></canvas>
@@ -208,6 +228,8 @@ const HEAD_MIN = 1.0 / 2, HEAD_MAX = 1.375 / 2;   // chin to top of hair
 const EYE_MIN = 1.125 / 2, EYE_MAX = 1.375 / 2;   // eye line above the bottom edge
 const HEAD_TARGET = 0.60, EYE_TARGET_FROM_TOP = 0.38;
 const DIGITAL_MAX_BYTES = 240 * 1024;
+// Face shadow thresholds, as brightness relative to the well-lit skin (1 = equally bright).
+const SHADOW = { sideFail: 0.62, sideWarn: 0.78, area: { forehead: 0.8, underEye: 0.72, chin: 0.65 }, glare: 0.03 };
 const CLS = { BG: 0, HAIR: 1, BODY: 2, FACE: 3, CLOTHES: 4, OTHER: 5 };  // selfie_multiclass labels
 
 // ---------------------------------------------------------------- text
@@ -228,14 +250,16 @@ const I18N = {
       verdictFail: "Bu fotoğraf düzeltilemez — yeniden çekin. Kırmızı maddelere bakın.",
       verdictOk: "Uygun. Fotoğrafınız hazır.",
       verdictWarn: n => `Uygun, ${n} uyarıyla. Uyarıları gözden geçirin.`,
-      whiten: "Arka planı beyaza çevir",
+      whiten: "Arka planı beyaz yap",
+      whitenShort: "Arkanızdaki duvar tek dokunuşla beyaza döner; yüz ve saç değişmez.",
+      recommended: "Önerilir", whyH: "Ne yapar, ne zaman kullanmalı?",
       whitenNote: "Arkanızdaki alanı beyaza çevirir; yüz ve saç değişmez. Resmî kurallar fotoğrafın dijital olarak değiştirilmemesini istiyor; en güvenlisi beyaz ya da kirli beyaz bir duvarın önünde çekmek. Saç kenarlarını önizlemede kontrol edin.",
       outputsH: "Hazır fotoğraflar",
       dlDigital: "Dijital (600×600)", dlSheet: "Baskı sayfası (4×6 inç)",
       digitalNote: "600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için.",
       printNote: "Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. İnce gri çizgilerden keserek iki adet 2×2 inç fotoğraf çıkar. Çıktıyı cetvelle ölçün: her kare tam 2 inç (5,1 cm) olmalı.",
       tipsH: "İyi bir fotoğraf için",
-      tips: ["Beyaz ya da kirli beyaz bir duvarın önünde durun.", "Işık önden ve eşit gelsin; pencereye dönün.", "Gözlüğü çıkarın, kameraya düz bakın, ağzınız kapalı olsun.", "Fotoğrafı başkası çeksin: yaklaşık 1 metreden, göz hizasından.", "Baş ve omuzlar kadraja rahatça sığsın."],
+      tips: ["Beyaz ya da kirli beyaz bir duvarın önünde durun.", "Gün ışığında pencereye dönün; ışık önden ve eşit gelsin.", "Tavan lambasını kapatın: tepeden gelen ışık göz altına ve çeneye gölge düşürür.", "Flaş kullanmayın; yüzde parlama ve arkada gölge yapar.", "Gözlüğü çıkarın, kameraya düz bakın, ağzınız kapalı olsun.", "Fotoğrafı başkası çeksin: yaklaşık 1 metreden, göz hizasından.", "Baş ve omuzlar kadraja rahatça sığsın."],
       aboutH: "Neye bakılıyor?",
       aboutBody: "Tek yüz; başın kameraya düz bakması; gözlerin açık, ağzın kapalı ve ifadenin doğal olması; gözlük olmaması; netlik; yüzde yandan gelen gölge olmaması; arka planın beyaz ya da kirli beyaz ve düz olması; çözünürlük. Ardından fotoğraf, çeneden saçın tepesine kadar olan yükseklik 1–1⅜ inç ve gözler alttan 1⅛–1⅜ inç olacak biçimde kırpılır. Eşikler henüz büyük bir fotoğraf setiyle ayarlanmadı; özellikle gözlük ve netlik kontrolleri tahminidir. Ölçüleri <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">resmî sayfadan</a> doğrulayın.",
       footer: "Resmî bir hizmet değildir. Başvurunun kabulü ABD Dışişleri Bakanlığı'na aittir.",
@@ -273,9 +297,12 @@ const I18N = {
       resOk: p => ["Çözünürlük yeterli", `Baş ${p.px} piksel yüksekliğinde.`],
       geoOk: p => ["Ölçüler ayarlandı", `Baş yüksekliği ${p.h} inç (izin verilen 1–1,375). Gözler alttan ${p.e} inç (izin verilen 1,125–1,375).`],
       bgOk: ["Arka plan beyaz ve düz", ""],
-      bgBad: p => ["Arka plan uygun değil", `Arka plan ${p.why}. Beyaz bir duvarın önünde yeniden çekin ya da aşağıdan beyaza çevirin.`],
-      shadowStrong: ["Yüzde güçlü gölge", "Yüzün bir yarısı belirgin biçimde karanlık. Işık önden ve eşit gelmeli."],
-      shadowSoft: ["Yüzde hafif gölge", "Işığı daha eşit yapın (pencereye dönün)."],
+      bgBad: p => ["Arka plan uygun değil", `Arka plan ${p.why}. Beyaz bir duvarın önünde yeniden çekin ya da "Hazır fotoğraflar" bölümündeki "Arka planı beyaz yap" düğmesini açın.`],
+      shadowSide: p => [`Yüzün ${p.s === "L" ? "sol" : "sağ"} yanı gölgede`, `Fotoğrafa bakınca ${p.s === "L" ? "sol" : "sağ"} taraf belirgin biçimde daha karanlık: ışık yandan geliyor. Işık kaynağına (pencereye) tam dönün; olmuyorsa karanlık tarafa, kadrajın dışından beyaz bir karton ya da kâğıt tutun — ışığı yüze geri yansıtır.`],
+      shadow_forehead: ["Alında gölge", "Alın yüzün geri kalanından karanlık. Saç, şapka siperliği ya da tepeden gelen ışık gölge yapıyor olabilir: saçı alından çekin, ışığı önden alın."],
+      shadow_underEye: ["Göz altlarında gölge", "Göz çevresi koyu kalmış; bu genelde ışığın tepeden (tavan lambasından) gelmesinden olur. Tavan ışığını kapatıp pencereye dönün ya da göz hizasında önünüze bir lamba koyun."],
+      shadow_chin: ["Çenede gölge", "Çene bölgesi karanlık; ışık tepeden geliyor. Işığı ve kamerayı göz hizasına alın."],
+      glare: ["Yüzde parlama", "Cildin bazı yerleri bembeyaz parlıyor (flaş ya da güçlü doğrudan ışık). Flaşı kapatın, perdeden süzülen gün ışığı gibi yumuşak bir ışık kullanın; gerekirse alnı ve burnu pudralayın."],
       lightOk: ["Işık eşit", ""],
       tooDark: ["Fotoğraf çok karanlık", ""], tooBright: ["Fotoğraf çok parlak", ""],
       bitDark: ["Fotoğraf biraz karanlık", ""], bitBright: ["Fotoğraf biraz parlak", ""],
@@ -302,13 +329,15 @@ const I18N = {
       verdictOk: "Looks good. Your photo is ready.",
       verdictWarn: n => `Acceptable, with ${n} warning${n > 1 ? "s" : ""}. Please review ${n > 1 ? "them" : "it"}.`,
       whiten: "Make background white",
+      whitenShort: "Turns the wall behind you white in one tap; face and hair stay unchanged.",
+      recommended: "Recommended", whyH: "What does it do, when to use it?",
       whitenNote: "Turns the area behind you white; face and hair stay unchanged. Official rules ask that photos not be digitally altered, so a white or off-white wall is the safest choice. Check the hair edges in the preview.",
       outputsH: "Your photos",
       dlDigital: "Digital (600×600)", dlSheet: "Print sheet (4×6 in)",
       digitalNote: "600×600 px JPEG under 240 KB — for online renewal.",
       printNote: "Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Cut along the thin grey lines to get two 2×2 in photos. Measure the print: each square must be exactly 2 in (5.1 cm).",
       tipsH: "For a good photo",
-      tips: ["Stand in front of a white or off-white wall.", "Light should be even and from the front; face a window.", "Remove glasses, look straight at the camera, keep your mouth closed.", "Have someone else take it, about 1 m (3 ft) away, at eye level.", "Leave room for your head and shoulders in the frame."],
+      tips: ["Stand in front of a white or off-white wall.", "Face a window in daylight so light falls evenly from the front.", "Turn off ceiling lights: light from above casts shadows under the eyes and chin.", "Avoid flash; it causes shine on the face and a shadow behind you.", "Remove glasses, look straight at the camera, keep your mouth closed.", "Have someone else take it, about 1 m (3 ft) away, at eye level.", "Leave room for your head and shoulders in the frame."],
       aboutH: "What is checked?",
       aboutBody: "One face; head facing the camera; eyes open, mouth closed, neutral expression; no glasses; sharpness; no side shadows on the face; plain white or off-white background; resolution. The photo is then cropped so that chin-to-top-of-hair is 1–1⅜ in and the eyes are 1⅛–1⅜ in above the bottom. Thresholds have not yet been tuned on a large photo set; the glasses and sharpness checks in particular are estimates. Confirm the measurements on the <a href=\"https://travel.state.gov/content/travel/en/passports/how-apply/photos.html\" target=\"_blank\" rel=\"noopener\">official page</a>.",
       footer: "Not an official service. Acceptance is decided by the US Department of State.",
@@ -346,9 +375,12 @@ const I18N = {
       resOk: p => ["Resolution OK", `Your head is ${p.px} pixels tall.`],
       geoOk: p => ["Size adjusted", `Head height ${p.h} in (allowed 1–1.375). Eyes ${p.e} in above the bottom (allowed 1.125–1.375).`],
       bgOk: ["Plain white background", ""],
-      bgBad: p => ["Background not suitable", `The background is ${p.why}. Retake in front of a white wall, or turn it white below.`],
-      shadowStrong: ["Strong shadow on face", "One half of the face is clearly darker. Light should come evenly from the front."],
-      shadowSoft: ["Slight shadow on face", "Make the light more even (face a window)."],
+      bgBad: p => ["Background not suitable", `The background is ${p.why}. Retake in front of a white wall, or switch on "Make background white" under "Your photos".`],
+      shadowSide: p => [`Shadow on the ${p.s === "L" ? "left" : "right"} side of the face`, `Looking at the photo, the ${p.s === "L" ? "left" : "right"} side is clearly darker: the light comes from the side. Turn to face the light source (window) directly, or hold a white card or sheet of paper just outside the frame on the dark side to bounce light back.`],
+      shadow_forehead: ["Shadow on the forehead", "The forehead is darker than the rest of the face. Hair, a cap brim or overhead light may be casting a shadow: move hair off the forehead and light your face from the front."],
+      shadow_underEye: ["Shadows under the eyes", "The eye area is dark, usually because light comes from above (a ceiling lamp). Turn off the overhead light and face a window, or put a lamp in front of you at eye level."],
+      shadow_chin: ["Shadow on the chin", "The chin area is dark; the light comes from above. Bring the light and camera to eye level."],
+      glare: ["Shine on the face", "Parts of the skin are blown out to white (flash or strong direct light). Turn off the flash and use soft light such as daylight through a curtain; blotting the forehead and nose helps too."],
       lightOk: ["Even lighting", ""],
       tooDark: ["Photo too dark", ""], tooBright: ["Photo too bright", ""],
       bitDark: ["Photo a bit dark", ""], bitBright: ["Photo a bit bright", ""],
@@ -600,12 +632,46 @@ function analyze(img) {
     }
   }
 
-  // face lighting
-  if (fN[0] > 30 && fN[1] > 30) {
-    const a = fL[0] / fN[0], b = fL[1] / fN[1], ratio = Math.min(a, b) / Math.max(a, b), mean = (fL[0] + fL[1]) / (fN[0] + fN[1]);
-    if (ratio < 0.65) add("fail", "shadowStrong");
-    else if (ratio < 0.8) add("warn", "shadowSoft");
-    else add("ok", "lightOk");
+  // face lighting: median brightness of skin patches around fixed landmarks.
+  // "L"/"R" are image left/right (as the viewer sees the photo).
+  // under-eye patch sits halfway between the lower lid and the upper cheek, where overhead light leaves its shadow
+  const PATCH = { foreheadL: [108], foreheadR: [337], underEyeL: [145, 118], underEyeR: [374, 347], cheekL: [205], cheekR: [425], chin: [199] };
+  const pr = 0.06 * faceW * k, med = {};
+  for (const [name, ids] of Object.entries(PATCH)) {
+    const c = { x: ids.reduce((s, i) => s + P(i).x, 0) / ids.length * k, y: ids.reduce((s, i) => s + P(i).y, 0) / ids.length * k }, v = [];
+    for (let y = c.y - pr; y <= c.y + pr; y += Math.max(1, pr / 8)) for (let x = c.x - pr; x <= c.x + pr; x += Math.max(1, pr / 8)) {
+      if ((x - c.x) ** 2 + (y - c.y) ** 2 > pr * pr || clsAt(x / ww, y / wh) !== CLS.FACE) continue;
+      const i = (clamp(Math.round(y), 0, wh - 1) * ww + clamp(Math.round(x), 0, ww - 1)) * 4;
+      v.push(lum(data[i], data[i + 1], data[i + 2]));
+    }
+    if (v.length >= 20) { v.sort((a, b) => a - b); med[name] = v[v.length >> 1]; }
+  }
+  // glare: share of skin pixels that are clipped to white
+  let skinN = 0, clipN = 0;
+  for (let y = 0; y < wh; y += 2) for (let x = 0; x < ww; x += 2) {
+    if (clsAt(x / ww, y / wh) !== CLS.FACE) continue;
+    const i = (y * ww + x) * 4; skinN++;
+    if (Math.min(data[i], data[i + 1], data[i + 2]) >= 245) clipN++;
+  }
+  const vals = Object.values(med).sort((a, b) => b - a);
+  if (fN[0] > 30 && fN[1] > 30 && vals.length >= 4) {
+    const ref = vals[1];                                     // second brightest: robust to one shiny spot
+    const rel = Object.fromEntries(Object.entries(med).map(([n, v]) => [n, v / ref]));
+    const side = s => { const v = ["forehead", "underEye", "cheek"].map(n => med[n + s]).filter(v => v !== undefined); return v.reduce((a, b) => a + b, 0) / v.length; };
+    const sl = side("L"), sr = side("R"), sideRatio = Math.min(sl, sr) / Math.max(sl, sr);
+    const pair = n => { const v = [rel[n + "L"], rel[n + "R"]].filter(v => v !== undefined); return v.length ? Math.max(...v) : 1; };
+    // an area is shadowed when both of its patches are dark (light from above / below), chin on its own
+    const area = { forehead: pair("forehead"), underEye: pair("underEye"), chin: rel.chin ?? 1 };
+    const [worst, worstV] = Object.entries(area).sort((a, b) => a[1] - b[1])[0];
+    geo.light = { med, rel, sideRatio, area, glare: clipN / Math.max(1, skinN) };
+    const mean = (fL[0] + fL[1]) / (fN[0] + fN[1]);
+    let lit = true;
+    if (sideRatio < SHADOW.sideFail || sideRatio < SHADOW.sideWarn) {
+      add(sideRatio < SHADOW.sideFail ? "fail" : "warn", "shadowSide", { s: sl < sr ? "L" : "R" }); lit = false;
+    }
+    if (worstV < SHADOW.area[worst]) { add("warn", "shadow_" + worst); lit = false; }
+    if (geo.light.glare > SHADOW.glare) { add("warn", "glare"); lit = false; }
+    if (lit) add("ok", "lightOk");
     if (mean < 60 || mean > 235) add("fail", mean < 60 ? "tooDark" : "tooBright");
     else if (mean < 85 || mean > 215) add("warn", mean < 85 ? "bitDark" : "bitBright");
   }
@@ -795,10 +861,13 @@ async function processFile(file) {
   drawSourceView(res);
   renderChecks(res);
   if (failed(res)) {
-    $("bgOpt").classList.add("hidden");
     setStep(2);
   } else {
-    $("bgOpt").classList.remove("hidden");
+    // flag the whitening switch when the background check complained
+    const rec = !!res.geo.bgFixable;
+    $("bgRec").classList.toggle("hidden", !rec);
+    $("bgOpt").classList.remove("rec");
+    if (rec) requestAnimationFrame(() => $("bgOpt").classList.add("rec"));
     $("whiten").checked = false;
     await renderOutputs();
     setStep(3);

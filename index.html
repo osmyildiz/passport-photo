@@ -257,7 +257,7 @@ const I18N = {
       outputsH: "Hazır fotoğraflar",
       dlDigital: "Dijital (600×600)", dlSheet: "Baskı sayfası (4×6 inç)",
       digitalNote: "600×600 piksel, 240 KB altı JPEG — çevrim içi yenileme başvurusu için.",
-      printNote: "Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. İnce gri çizgilerden keserek iki adet 2×2 inç fotoğraf çıkar. Çıktıyı cetvelle ölçün: her kare tam 2 inç (5,1 cm) olmalı.",
+      printNote: "Dosyayı bir fotoğraf baskı hizmetine (örneğin CVS veya Walgreens) <b>4×6 inç</b> baskı olarak yükleyin, kırpma seçeneğini kapatın. Köşelerdeki siyah kesim işaretlerini hizalayıp kesikli çizgi boyunca kesin; iki adet 2×2 inç fotoğraf çıkar. Çıktıyı cetvelle ölçün: her kare tam 2 inç (5,1 cm) olmalı.",
       tipsH: "İyi bir fotoğraf için",
       tips: ["Beyaz ya da kirli beyaz bir duvarın önünde durun.", "Gün ışığında pencereye dönün; ışık önden ve eşit gelsin.", "Tavan lambasını kapatın: tepeden gelen ışık göz altına ve çeneye gölge düşürür.", "Flaş kullanmayın; yüzde parlama ve arkada gölge yapar.", "Gözlüğü çıkarın, kameraya düz bakın, ağzınız kapalı olsun.", "Fotoğrafı başkası çeksin: yaklaşık 1 metreden, göz hizasından.", "Baş ve omuzlar kadraja rahatça sığsın."],
       aboutH: "Neye bakılıyor?",
@@ -335,7 +335,7 @@ const I18N = {
       outputsH: "Your photos",
       dlDigital: "Digital (600×600)", dlSheet: "Print sheet (4×6 in)",
       digitalNote: "600×600 px JPEG under 240 KB — for online renewal.",
-      printNote: "Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Cut along the thin grey lines to get two 2×2 in photos. Measure the print: each square must be exactly 2 in (5.1 cm).",
+      printNote: "Upload this file to a photo print service (e.g. CVS or Walgreens) as a <b>4×6 in</b> print with cropping turned off. Line up the black crop marks at the corners and cut along the dashed line to get two 2×2 in photos. Measure the print: each square must be exactly 2 in (5.1 cm).",
       tipsH: "For a good photo",
       tips: ["Stand in front of a white or off-white wall.", "Face a window in daylight so light falls evenly from the front.", "Turn off ceiling lights: light from above casts shadows under the eyes and chin.", "Avoid flash; it causes shine on the face and a shadow behind you.", "Remove glasses, look straight at the camera, keep your mouth closed.", "Have someone else take it, about 1 m (3 ft) away, at eye level.", "Leave room for your head and shoulders in the frame."],
       aboutH: "What is checked?",
@@ -765,10 +765,24 @@ function renderSheet(photo) {
   const ctx = sheet.getContext("2d");
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1800, 1200);
   const gap = 150, x0 = (1800 - 2 * S - gap) / 2, y0 = (1200 - S) / 2;
-  ctx.strokeStyle = "#bbb"; ctx.lineWidth = 1;
+  const markGap = 10, markLen = 70;                        // crop marks start just outside the photo edge
   for (const x of [x0, x0 + S + gap]) {
     ctx.drawImage(photo, x, y0);
+    // faint dashed cutting line just outside the edge
+    ctx.strokeStyle = "#c8c8c8"; ctx.lineWidth = 1; ctx.setLineDash([12, 8]);
     ctx.strokeRect(x - 0.5, y0 - 0.5, S + 1, S + 1);
+    ctx.setLineDash([]);
+    // corner crop marks continuing each edge outward, so the cut lines up from both sides
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (const cx of [x, x + S]) for (const cy of [y0, y0 + S]) {
+      const dx = cx === x ? -1 : 1, dy = cy === y0 ? -1 : 1;
+      ctx.moveTo(cx, cy + dy * markGap); ctx.lineTo(cx, cy + dy * (markGap + markLen));
+      ctx.moveTo(cx + dx * markGap, cy); ctx.lineTo(cx + dx * (markGap + markLen), cy);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#777"; ctx.font = "28px -apple-system, Helvetica, Arial, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("✂  2 × 2 in  ·  5.1 cm", x + S / 2, y0 + S + markGap + markLen + 40);
   }
   return sheet;
 }
